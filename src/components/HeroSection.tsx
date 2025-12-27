@@ -1,9 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Search, Shield, Users, TrendingUp } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = () => {
+    navigate(`/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`);
+  };
 
   const stats = [
     { icon: Users, value: "50,000+", label: "Aktiv istifadəçi" },
@@ -51,7 +57,7 @@ const HeroSection = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-14 pl-14 pr-36 bg-card border-2 border-border rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-card"
               />
-              <Button variant="hero" className="absolute right-2 top-1/2 -translate-y-1/2">
+              <Button variant="hero" className="absolute right-2 top-1/2 -translate-y-1/2" onClick={handleSearch}>
                 Axtar
               </Button>
             </div>
