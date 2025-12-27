@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 const companies = [
   {
+    id: "kapital-bank",
     name: "Kapital Bank",
     category: "Bank",
     logo: "https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=100&h=100&fit=crop",
@@ -14,6 +15,7 @@ const companies = [
     topReview: "Müştəri xidməti çox yaxşılaşıb, mobil tətbiq əla işləyir.",
   },
   {
+    id: "azercell",
     name: "Azercell",
     category: "Telekommunikasiya",
     logo: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=100&h=100&fit=crop",
@@ -24,6 +26,7 @@ const companies = [
     topReview: "İnternet sürəti stabil, amma qiymətlər bir az yüksəkdir.",
   },
   {
+    id: "bravo",
     name: "Bravo",
     category: "Retail",
     logo: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=100&h=100&fit=crop",
@@ -34,6 +37,7 @@ const companies = [
     topReview: "Məhsul çeşidi geniş, işçilər yardımseverdir.",
   },
   {
+    id: "pasha-sigorta",
     name: "PASHA Sığorta",
     category: "Sığorta",
     logo: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=100&h=100&fit=crop",
@@ -44,6 +48,7 @@ const companies = [
     topReview: "Ödəniş prosesi çox sürətlidir, məsləhətçilər peşəkardır.",
   },
   {
+    id: "bolt",
     name: "Bolt",
     category: "Nəqliyyat",
     logo: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=100&h=100&fit=crop",
@@ -54,6 +59,7 @@ const companies = [
     topReview: "Qiymətlər münasib, sürücülər nəzakətlidir.",
   },
   {
+    id: "wolt",
     name: "Wolt",
     category: "E-ticarət",
     logo: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=100&h=100&fit=crop",
@@ -87,7 +93,7 @@ const FeaturedCompanies = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {companies.map((company, index) => (
             <div
-              key={company.name}
+              key={company.id}
               className="animate-fade-up"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
