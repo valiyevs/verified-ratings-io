@@ -2,9 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Shield, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-card/90 backdrop-blur-md border-b border-border">
@@ -21,40 +24,41 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6">
             <Link to="/search" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              Şirkətlər
+              {t("nav.companies")}
             </Link>
             <a href="#categories" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              Kateqoriyalar
+              {t("nav.categories")}
             </a>
             <Link to="/surveys" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              Sorğular
+              {t("nav.surveys")}
             </Link>
             <Link to="/compare" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              Müqayisə
+              {t("nav.compare")}
             </Link>
             <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              Necə işləyir?
-            </a>
-            <a href="#business" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              Biznes üçün
+              {t("nav.howItWorks")}
             </a>
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost">Daxil ol</Button>
-            <Button variant="hero">Rəy yaz</Button>
+          <div className="hidden md:flex items-center gap-2">
+            <LanguageSwitcher />
+            <Button variant="ghost">{t("nav.login")}</Button>
+            <Button variant="hero">{t("nav.writeReview")}</Button>
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 text-foreground"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="md:hidden flex items-center gap-2">
+            <LanguageSwitcher />
+            <button
+              className="p-2 text-foreground"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -62,26 +66,26 @@ const Header = () => {
           <div className="md:hidden py-4 border-t border-border animate-fade-up">
             <nav className="flex flex-col gap-4">
               <Link to="/search" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
-                Şirkətlər
+                {t("nav.companies")}
               </Link>
               <a href="#categories" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
-                Kateqoriyalar
+                {t("nav.categories")}
               </a>
               <Link to="/surveys" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
-                Sorğular
+                {t("nav.surveys")}
               </Link>
               <Link to="/compare" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
-                Müqayisə
+                {t("nav.compare")}
               </Link>
               <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
-                Necə işləyir?
+                {t("nav.howItWorks")}
               </a>
               <a href="#business" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
-                Biznes üçün
+                {t("nav.forBusiness")}
               </a>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Button variant="outline" className="w-full">Daxil ol</Button>
-                <Button variant="hero" className="w-full">Rəy yaz</Button>
+                <Button variant="outline" className="w-full">{t("nav.login")}</Button>
+                <Button variant="hero" className="w-full">{t("nav.writeReview")}</Button>
               </div>
             </nav>
           </div>
