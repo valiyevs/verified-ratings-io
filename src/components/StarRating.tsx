@@ -6,9 +6,18 @@ interface StarRatingProps {
   maxRating?: number;
   size?: "sm" | "md" | "lg";
   showValue?: boolean;
+  interactive?: boolean;
+  onRatingChange?: (rating: number) => void;
 }
 
-const StarRating = ({ rating, maxRating = 5, size = "md", showValue = true }: StarRatingProps) => {
+const StarRating = ({ 
+  rating, 
+  maxRating = 5, 
+  size = "md", 
+  showValue = true,
+  interactive = false,
+  onRatingChange
+}: StarRatingProps) => {
   const sizes = {
     sm: "w-4 h-4",
     md: "w-5 h-5",
@@ -21,6 +30,12 @@ const StarRating = ({ rating, maxRating = 5, size = "md", showValue = true }: St
     lg: "text-lg",
   };
 
+  const handleClick = (index: number) => {
+    if (interactive && onRatingChange) {
+      onRatingChange(index + 1);
+    }
+  };
+
   return (
     <div className="flex items-center gap-1.5">
       <div className="flex items-center gap-0.5">
@@ -29,11 +44,16 @@ const StarRating = ({ rating, maxRating = 5, size = "md", showValue = true }: St
           const partial = index === Math.floor(rating) && rating % 1 !== 0;
 
           return (
-            <div key={index} className="relative">
+            <div 
+              key={index} 
+              className={cn("relative", interactive && "cursor-pointer")}
+              onClick={() => handleClick(index)}
+            >
               <Star
                 className={cn(
                   sizes[size],
-                  "text-border"
+                  "text-border transition-colors",
+                  interactive && "hover:text-gold/50"
                 )}
                 fill="currentColor"
               />
@@ -41,7 +61,7 @@ const StarRating = ({ rating, maxRating = 5, size = "md", showValue = true }: St
                 <Star
                   className={cn(
                     sizes[size],
-                    "absolute inset-0 text-gold"
+                    "absolute inset-0 text-gold pointer-events-none"
                   )}
                   fill="currentColor"
                   style={{
