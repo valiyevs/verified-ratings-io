@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { Search, SlidersHorizontal, X, Building2, Star } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Search, SlidersHorizontal, X, Building2, Star, Scale, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import StarRating from "@/components/StarRating";
@@ -140,14 +141,24 @@ const ratingFilters = [
   { label: "2+ ulduz", value: 2 },
 ];
 
+const sortOptions = [
+  { label: "Ən yüksək reytinq", value: "rating-desc" },
+  { label: "Ən aşağı reytinq", value: "rating-asc" },
+  { label: "Ən çox rəy", value: "reviews-desc" },
+  { label: "A-Z", value: "name-asc" },
+];
+
 const SearchPage = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Hamısı");
   const [minRating, setMinRating] = useState(0);
-  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState("rating-desc");
+  const [showFilters, setShowFilters] = useState(true);
+  const [compareList, setCompareList] = useState<string[]>([]);
 
   const filteredCompanies = useMemo(() => {
-    return allCompanies.filter((company) => {
+    let result = allCompanies.filter((company) => {
       const matchesSearch =
         company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         company.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -156,12 +167,43 @@ const SearchPage = () => {
       const matchesRating = company.rating >= minRating;
       return matchesSearch && matchesCategory && matchesRating;
     });
-  }, [searchQuery, selectedCategory, minRating]);
+
+    // Sort
+    switch (sortBy) {
+      case "rating-desc":
+        result.sort((a, b) => b.rating - a.rating);
+        break;
+      case "rating-asc":
+        result.sort((a, b) => a.rating - b.rating);
+        break;
+      case "reviews-desc":
+        result.sort((a, b) => b.reviewCount - a.reviewCount);
+        break;
+      case "name-asc":
+        result.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+    }
+
+    return result;
+  }, [searchQuery, selectedCategory, minRating, sortBy]);
 
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedCategory("Hamısı");
     setMinRating(0);
+    setSortBy("rating-desc");
+  };
+
+  const toggleCompare = (id: string) => {
+    if (compareList.includes(id)) {
+      setCompareList(compareList.filter(c => c !== id));
+    } else if (compareList.length < 3) {
+      setCompareList([...compareList, id]);
+    }
+  };
+
+  const goToCompare = () => {
+    navigate(`/compare?companies=${compareList.join(",")}`);
   };
 
   const hasActiveFilters =
@@ -174,7 +216,7 @@ const SearchPage = () => {
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4">
           {/* Search Header */}
-          <div className="max-w-4xl mx-auto mb-8">
+          <div className="max-w-5xl mx-auto mb-8">
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4 text-center">
               Şirkət Axtarışı
             </h1>
@@ -229,8 +271,8 @@ const SearchPage = () => {
 
           {/* Filters Panel */}
           {showFilters && (
-            <div className="max-w-4xl mx-auto mb-8 p-6 bg-card rounded-2xl border border-border animate-fade-up">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="max-w-5xl mx-auto mb-8 p-6 bg-card rounded-2xl border border-border animate-fade-up">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Category Filter */}
                 <div>
                   <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -242,7 +284,7 @@ const SearchPage = () => {
                       <button
                         key={category}
                         onClick={() => setSelectedCategory(category)}
-                        className={`px-4 py-2 rounded-full text-sm transition-all ${
+                        className={`px-3 py-1.5 rounded-full text-sm transition-all ${
                           selectedCategory === category
                             ? "bg-primary text-primary-foreground"
                             : "bg-secondary text-secondary-foreground hover:bg-muted"
@@ -265,7 +307,7 @@ const SearchPage = () => {
                       <button
                         key={filter.value}
                         onClick={() => setMinRating(filter.value)}
-                        className={`px-4 py-2 rounded-full text-sm transition-all ${
+                        className={`px-3 py-1.5 rounded-full text-sm transition-all ${
                           minRating === filter.value
                             ? "bg-primary text-primary-foreground"
                             : "bg-secondary text-secondary-foreground hover:bg-muted"
@@ -276,12 +318,64 @@ const SearchPage = () => {
                     ))}
                   </div>
                 </div>
+
+                {/* Sort */}
+                <div>
+                  <h3 className="font-semibold text-foreground mb-3">
+                    Sıralama
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {sortOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => setSortBy(option.value)}
+                        className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                          sortBy === option.value
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
+          {/* Compare Floating Bar */}
+          {compareList.length > 0 && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-up">
+              <Card className="shadow-elegant border-primary/20">
+                <CardContent className="py-3 px-4 flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Scale className="w-5 h-5 text-primary" />
+                    <span className="font-medium">{compareList.length} şirkət seçildi</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {compareList.map(id => {
+                      const company = allCompanies.find(c => c.id === id);
+                      return company ? (
+                        <div key={id} className="w-8 h-8 rounded-full bg-secondary overflow-hidden border-2 border-background">
+                          <img src={company.logo} alt={company.name} className="w-full h-full object-contain p-1" />
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setCompareList([])}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                  <Button variant="gold" size="sm" onClick={goToCompare} disabled={compareList.length < 2}>
+                    Müqayisə et
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Results */}
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <p className="text-muted-foreground mb-4">
               {filteredCompanies.length} nəticə tapıldı
             </p>
@@ -302,32 +396,31 @@ const SearchPage = () => {
             ) : (
               <div className="space-y-4">
                 {filteredCompanies.map((company) => (
-                  <Link
+                  <div
                     key={company.id}
-                    to={`/company/${company.id}`}
-                    className="block bg-card rounded-2xl border border-border p-6 hover:shadow-card-hover hover:border-primary/30 transition-all group"
+                    className="bg-card rounded-2xl border border-border p-6 hover:shadow-card-hover hover:border-primary/30 transition-all group"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-white rounded-xl p-2 flex items-center justify-center border border-border group-hover:border-primary/30 transition-colors">
-                        <img
-                          src={company.logo}
-                          alt={company.name}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "/placeholder.svg";
-                          }}
-                        />
-                      </div>
+                      <Link to={`/company/${company.id}`} className="flex-shrink-0">
+                        <div className="w-16 h-16 bg-white rounded-xl p-2 flex items-center justify-center border border-border group-hover:border-primary/30 transition-colors">
+                          <img
+                            src={company.logo}
+                            alt={company.name}
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "/placeholder.svg";
+                            }}
+                          />
+                        </div>
+                      </Link>
 
-                      <div className="flex-1 min-w-0">
+                      <Link to={`/company/${company.id}`} className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
                             {company.name}
                           </h3>
                           {company.verified && (
-                            <Badge variant="secondary" className="shrink-0">
-                              Doğrulanmış
-                            </Badge>
+                            <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground mb-2">
@@ -339,18 +432,30 @@ const SearchPage = () => {
                             {company.reviewCount.toLocaleString()} rəy
                           </span>
                         </div>
-                      </div>
+                      </Link>
 
-                      <div className="text-right shrink-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <StarRating rating={company.rating} size="sm" showValue={false} />
-                          <span className="font-bold text-foreground">
-                            {company.rating.toFixed(1)}
-                          </span>
+                      <div className="flex items-center gap-4 shrink-0">
+                        <div className="text-right">
+                          <div className="flex items-center gap-2 mb-1">
+                            <StarRating rating={company.rating} size="sm" showValue={false} />
+                            <span className="font-bold text-foreground">
+                              {company.rating.toFixed(1)}
+                            </span>
+                          </div>
                         </div>
+
+                        <Button
+                          variant={compareList.includes(company.id) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => toggleCompare(company.id)}
+                          disabled={!compareList.includes(company.id) && compareList.length >= 3}
+                        >
+                          <Scale className="w-4 h-4 mr-1" />
+                          {compareList.includes(company.id) ? "Seçildi" : "Müqayisə"}
+                        </Button>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}

@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import StarRating from "./StarRating";
-import { MessageSquare, TrendingUp, CheckCircle } from "lucide-react";
+import { MessageSquare, TrendingUp, CheckCircle, Scale } from "lucide-react";
 
 interface CompanyCardProps {
   id: string;
@@ -13,6 +14,8 @@ interface CompanyCardProps {
   trend: "up" | "down" | "stable";
   verified: boolean;
   topReview?: string;
+  onCompare?: (id: string) => void;
+  isInCompare?: boolean;
 }
 
 const CompanyCard = ({
@@ -25,7 +28,15 @@ const CompanyCard = ({
   trend,
   verified,
   topReview,
+  onCompare,
+  isInCompare = false,
 }: CompanyCardProps) => {
+  const handleCompareClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onCompare?.(id);
+  };
+
   return (
     <Link to={`/company/${id}`} className="block">
       <div className="group bg-card rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 border border-border/50 cursor-pointer">
@@ -47,6 +58,19 @@ const CompanyCard = ({
               {category}
             </Badge>
           </div>
+
+          {/* Compare Button */}
+          {onCompare && (
+            <Button
+              variant={isInCompare ? "default" : "outline"}
+              size="sm"
+              className="shrink-0"
+              onClick={handleCompareClick}
+            >
+              <Scale className="w-4 h-4 mr-1" />
+              {isInCompare ? "Seçildi" : "Müqayisə"}
+            </Button>
+          )}
         </div>
 
         {/* Rating */}
