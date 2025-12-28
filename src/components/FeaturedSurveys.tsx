@@ -3,6 +3,7 @@ import { Clock, Gift, Users, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Survey {
   id: string;
@@ -44,21 +45,23 @@ const featuredSurveys: Survey[] = [
 ];
 
 const FeaturedSurveys = () => {
+  const { t } = useLanguage();
+
   return (
     <section className="py-16 bg-secondary/30">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-10">
           <div>
             <h2 className="font-display text-3xl font-bold text-foreground mb-2">
-              Aktiv Sorğular
+              {t("surveys.title")}
             </h2>
             <p className="text-muted-foreground">
-              Sorğulara cavab verin, mükafatlar qazanın
+              {t("surveys.subtitle")}
             </p>
           </div>
           <Link to="/surveys">
             <Button variant="outline" className="gap-2">
-              Hamısına bax
+              {t("surveys.viewAll")}
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
@@ -89,7 +92,7 @@ const FeaturedSurveys = () => {
                     <div className="flex items-center gap-3 text-sm text-muted-foreground mb-4">
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
-                        <span>{daysLeft > 0 ? `${daysLeft} gün` : 'Bitmək üzrə'}</span>
+                        <span>{daysLeft > 0 ? `${daysLeft} ${t("surveys.daysLeft")}` : t("surveys.expiring")}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="w-4 h-4" />

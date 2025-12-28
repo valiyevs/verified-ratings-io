@@ -1,6 +1,8 @@
+import { Link } from "react-router-dom";
 import CompanyCard from "./CompanyCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const companies = [
   {
@@ -72,22 +74,26 @@ const companies = [
 ];
 
 const FeaturedCompanies = () => {
+  const { t } = useLanguage();
+
   return (
     <section id="companies" className="py-20 bg-secondary/30">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
           <div>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
-              Ən Yüksək Reytinqli Şirkətlər
+              {t("featured.title")}
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl">
-              Real istifadəçi rəylərinə əsasən ən yüksək qiymətləndirilən şirkətlər
+              {t("featured.subtitle")}
             </p>
           </div>
-          <Button variant="outline" className="self-start md:self-auto">
-            Hamısına bax
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
+          <Link to="/search">
+            <Button variant="outline" className="self-start md:self-auto">
+              {t("featured.viewAll")}
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
