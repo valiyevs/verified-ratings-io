@@ -66,6 +66,7 @@ const HeroSection = () => {
               {["Banklar", "Sığorta", "Telekommunikasiya", "E-ticarət"].map((tag) => (
                 <button
                   key={tag}
+                  onClick={() => navigate(`/search?category=${encodeURIComponent(tag)}`)}
                   className="px-3 py-1 bg-secondary hover:bg-muted rounded-full transition-colors"
                 >
                   {tag}

@@ -45,8 +45,12 @@ const Header = () => {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-2">
             <LanguageSwitcher />
-            <Button variant="ghost">{t("nav.login")}</Button>
-            <Button variant="hero">{t("nav.writeReview")}</Button>
+            <Link to="/auth">
+              <Button variant="ghost">{t("nav.login")}</Button>
+            </Link>
+            <Link to="/search">
+              <Button variant="hero">{t("nav.writeReview")}</Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -84,8 +88,12 @@ const Header = () => {
                 {t("nav.forBusiness")}
               </a>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Button variant="outline" className="w-full">{t("nav.login")}</Button>
-                <Button variant="hero" className="w-full">{t("nav.writeReview")}</Button>
+                <Link to="/auth">
+                  <Button variant="outline" className="w-full">{t("nav.login")}</Button>
+                </Link>
+                <Link to="/search">
+                  <Button variant="hero" className="w-full">{t("nav.writeReview")}</Button>
+                </Link>
               </div>
             </nav>
           </div>
