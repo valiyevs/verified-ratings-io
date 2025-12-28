@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Search, SlidersHorizontal, X, Building2, Star, Scale, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import StarRating from "@/components/StarRating";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Company {
   id: string;
@@ -134,28 +135,41 @@ const categories = [
   "Kommunal",
 ];
 
-const ratingFilters = [
-  { label: "Hamısı", value: 0 },
-  { label: "4+ ulduz", value: 4 },
-  { label: "3+ ulduz", value: 3 },
-  { label: "2+ ulduz", value: 2 },
-];
-
-const sortOptions = [
-  { label: "Ən yüksək reytinq", value: "rating-desc" },
-  { label: "Ən aşağı reytinq", value: "rating-asc" },
-  { label: "Ən çox rəy", value: "reviews-desc" },
-  { label: "A-Z", value: "name-asc" },
-];
-
 const SearchPage = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Hamısı");
+  const [searchParams] = useSearchParams();
+  const { t } = useLanguage();
+  
+  const initialCategory = searchParams.get("category") || "Hamısı";
+  const initialQuery = searchParams.get("q") || "";
+  
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState("rating-desc");
   const [showFilters, setShowFilters] = useState(true);
   const [compareList, setCompareList] = useState<string[]>([]);
+
+  useEffect(() => {
+    const category = searchParams.get("category");
+    const query = searchParams.get("q");
+    if (category) setSelectedCategory(category);
+    if (query) setSearchQuery(query);
+  }, [searchParams]);
+
+  const ratingFilters = [
+    { label: t("search.all"), value: 0 },
+    { label: t("search.4stars"), value: 4 },
+    { label: t("search.3stars"), value: 3 },
+    { label: t("search.2stars"), value: 2 },
+  ];
+
+  const sortOptions = [
+    { label: t("search.sortRatingDesc"), value: "rating-desc" },
+    { label: t("search.sortRatingAsc"), value: "rating-asc" },
+    { label: t("search.sortReviews"), value: "reviews-desc" },
+    { label: t("search.sortName"), value: "name-asc" },
+  ];
 
   const filteredCompanies = useMemo(() => {
     let result = allCompanies.filter((company) => {
@@ -218,10 +232,10 @@ const SearchPage = () => {
           {/* Search Header */}
           <div className="max-w-5xl mx-auto mb-8">
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4 text-center">
-              Şirkət Axtarışı
+              {t("search.title")}
             </h1>
             <p className="text-muted-foreground text-center mb-8">
-              {allCompanies.length} şirkət arasından axtarış edin
+              {allCompanies.length} {t("search.subtitle")}
             </p>
 
             {/* Search Bar */}
@@ -229,7 +243,7 @@ const SearchPage = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Şirkət adı və ya açar söz axtarın..."
+                placeholder={t("search.placeholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-14 pl-12 pr-12 text-lg rounded-xl border-2 border-border focus:border-primary"
@@ -252,7 +266,7 @@ const SearchPage = () => {
                 className="gap-2"
               >
                 <SlidersHorizontal className="w-4 h-4" />
-                Filtrlər
+                {t("search.filters")}
                 {hasActiveFilters && (
                   <Badge variant="secondary" className="ml-1">
                     Aktiv
@@ -263,7 +277,7 @@ const SearchPage = () => {
               {hasActiveFilters && (
                 <Button variant="ghost" onClick={clearFilters} className="gap-2">
                   <X className="w-4 h-4" />
-                  Təmizlə
+                  {t("search.clear")}
                 </Button>
               )}
             </div>
@@ -277,7 +291,7 @@ const SearchPage = () => {
                 <div>
                   <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                     <Building2 className="w-4 h-4" />
-                    Kateqoriya
+                    {t("search.category")}
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {categories.map((category) => (
@@ -290,7 +304,7 @@ const SearchPage = () => {
                             : "bg-secondary text-secondary-foreground hover:bg-muted"
                         }`}
                       >
-                        {category}
+                        {category === "Hamısı" ? t("search.all") : category}
                       </button>
                     ))}
                   </div>
@@ -300,7 +314,7 @@ const SearchPage = () => {
                 <div>
                   <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                     <Star className="w-4 h-4" />
-                    Minimum Reytinq
+                    {t("search.minRating")}
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {ratingFilters.map((filter) => (
@@ -322,7 +336,7 @@ const SearchPage = () => {
                 {/* Sort */}
                 <div>
                   <h3 className="font-semibold text-foreground mb-3">
-                    Sıralama
+                    {t("search.sort")}
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {sortOptions.map((option) => (
@@ -351,7 +365,7 @@ const SearchPage = () => {
                 <CardContent className="py-3 px-4 flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <Scale className="w-5 h-5 text-primary" />
-                    <span className="font-medium">{compareList.length} şirkət seçildi</span>
+                    <span className="font-medium">{compareList.length} {t("search.companiesSelected")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     {compareList.map(id => {
@@ -367,7 +381,7 @@ const SearchPage = () => {
                     <X className="w-4 h-4" />
                   </Button>
                   <Button variant="gold" size="sm" onClick={goToCompare} disabled={compareList.length < 2}>
-                    Müqayisə et
+                    {t("search.compareNow")}
                   </Button>
                 </CardContent>
               </Card>
@@ -377,20 +391,20 @@ const SearchPage = () => {
           {/* Results */}
           <div className="max-w-5xl mx-auto">
             <p className="text-muted-foreground mb-4">
-              {filteredCompanies.length} nəticə tapıldı
+              {filteredCompanies.length} {t("search.results")}
             </p>
 
             {filteredCompanies.length === 0 ? (
               <div className="text-center py-16 bg-card rounded-2xl border border-border">
                 <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-foreground mb-2">
-                  Nəticə tapılmadı
+                  {t("search.noResults")}
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  Axtarış kriteriyalarınıza uyğun şirkət tapılmadı
+                  {t("search.noResultsDesc")}
                 </p>
                 <Button variant="outline" onClick={clearFilters}>
-                  Filtrləri təmizlə
+                  {t("search.clearFilters")}
                 </Button>
               </div>
             ) : (
@@ -429,7 +443,7 @@ const SearchPage = () => {
                         <div className="flex items-center gap-4 text-sm">
                           <Badge variant="outline">{company.category}</Badge>
                           <span className="text-muted-foreground">
-                            {company.reviewCount.toLocaleString()} rəy
+                            {company.reviewCount.toLocaleString()} {t("featured.reviews")}
                           </span>
                         </div>
                       </Link>
@@ -451,7 +465,7 @@ const SearchPage = () => {
                           disabled={!compareList.includes(company.id) && compareList.length >= 3}
                         >
                           <Scale className="w-4 h-4 mr-1" />
-                          {compareList.includes(company.id) ? "Seçildi" : "Müqayisə"}
+                          {compareList.includes(company.id) ? t("search.selected") : t("search.compare")}
                         </Button>
                       </div>
                     </div>

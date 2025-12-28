@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { 
   Building2, 
   Smartphone, 
@@ -21,6 +22,12 @@ const categories = [
 ];
 
 const Categories = () => {
+  const navigate = useNavigate();
+
+  const handleCategoryClick = (categoryName: string) => {
+    navigate(`/search?category=${encodeURIComponent(categoryName)}`);
+  };
+
   return (
     <section id="categories" className="py-20">
       <div className="container mx-auto px-4">
@@ -37,6 +44,7 @@ const Categories = () => {
           {categories.map((category, index) => (
             <button
               key={category.name}
+              onClick={() => handleCategoryClick(category.name)}
               className="group bg-card rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 text-left border border-border/50 animate-fade-up"
               style={{ animationDelay: `${index * 0.05}s` }}
             >

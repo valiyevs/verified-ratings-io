@@ -41,8 +41,8 @@ const Footer = () => {
             <h4 className="font-semibold mb-4">{t("footer.platform")}</h4>
             <ul className="space-y-3">
               <li><Link to="/search" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("nav.companies")}</Link></li>
-              <li><a href="#categories" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("nav.categories")}</a></li>
-              <li><a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.latestReviews")}</a></li>
+              <li><Link to="/#categories" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("nav.categories")}</Link></li>
+              <li><Link to="/search" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.latestReviews")}</Link></li>
               <li><Link to="/compare" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("nav.compare")}</Link></li>
             </ul>
           </div>
@@ -50,20 +50,20 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">{t("footer.forCompanies")}</h4>
             <ul className="space-y-3">
-              <li><a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.registration")}</a></li>
-              <li><a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.pricing")}</a></li>
-              <li><a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.analytics")}</a></li>
-              <li><a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.api")}</a></li>
+              <li><Link to="/#business" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.registration")}</Link></li>
+              <li><Link to="/#business" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.pricing")}</Link></li>
+              <li><Link to="/surveys" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.analytics")}</Link></li>
+              <li><Link to="/#business" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.api")}</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-semibold mb-4">{t("footer.support")}</h4>
             <ul className="space-y-3">
-              <li><a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.about")}</a></li>
-              <li><a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.contact")}</a></li>
-              <li><a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.faq")}</a></li>
-              <li><a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.privacy")}</a></li>
+              <li><Link to="/#how-it-works" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.about")}</Link></li>
+              <li><a href="mailto:info@ratings.az" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.contact")}</a></li>
+              <li><Link to="/#how-it-works" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.faq")}</Link></li>
+              <li><Link to="/" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">{t("footer.privacy")}</Link></li>
             </ul>
           </div>
         </div>

@@ -1,6 +1,7 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BarChart3, MessageSquareText, Users, TrendingUp } from "lucide-react";
-
+import { useLanguage } from "@/contexts/LanguageContext";
 const features = [
   {
     icon: MessageSquareText,
@@ -25,6 +26,8 @@ const features = [
 ];
 
 const BusinessCTA = () => {
+  const { t } = useLanguage();
+
   return (
     <section id="business" className="py-20">
       <div className="container mx-auto px-4">
@@ -39,22 +42,25 @@ const BusinessCTA = () => {
               <div>
                 <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
                   <BarChart3 className="w-4 h-4" />
-                  Şirkətlər üçün
+                  {t("nav.forBusiness")}
                 </div>
                 <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-                  Müştəri Səsini Dinləyin, Biznesinizi İnkişaf Etdirin
+                  {t("business.title")}
                 </h2>
                 <p className="text-muted-foreground text-lg mb-8">
-                  Şəffaf Reytinq platformasında şirkət profilinizi aktivləşdirin 
-                  və müştəri məmnuniyyətini real-vaxt rejimində izləyin.
+                  {t("business.subtitle")}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Button variant="hero" size="lg">
-                    Şirkətimi Qeydiyyatdan Keçir
-                  </Button>
-                  <Button variant="outline" size="lg">
-                    Demo İstə
-                  </Button>
+                  <Link to="/surveys/create">
+                    <Button variant="hero" size="lg">
+                      {t("business.cta")}
+                    </Button>
+                  </Link>
+                  <a href="mailto:info@ratings.az">
+                    <Button variant="outline" size="lg">
+                      Demo İstə
+                    </Button>
+                  </a>
                 </div>
               </div>
 
