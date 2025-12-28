@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Shield, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,12 +22,15 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#companies" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+            <Link to="/search" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               Şirkətlər
-            </a>
+            </Link>
             <a href="#categories" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               Kateqoriyalar
             </a>
+            <Link to="/surveys" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+              Sorğular
+            </Link>
             <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               Necə işləyir?
             </a>
@@ -54,12 +58,15 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-border animate-fade-up">
             <nav className="flex flex-col gap-4">
-              <a href="#companies" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
+              <Link to="/search" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 Şirkətlər
-              </a>
+              </Link>
               <a href="#categories" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 Kateqoriyalar
               </a>
+              <Link to="/surveys" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
+                Sorğular
+              </Link>
               <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 Necə işləyir?
               </a>
