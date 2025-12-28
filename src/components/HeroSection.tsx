@@ -35,9 +35,8 @@ const HeroSection = () => {
 
           {/* Heading */}
           <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 animate-fade-up" style={{ animationDelay: "0.1s" }}>
-            Azərbaycanın{" "}
-            <span className="text-gradient">Şəffaf</span>{" "}
-            Reytinq Platforması
+            <span className="text-gradient">ratings.az</span>{" "}
+            <span className="block text-2xl md:text-3xl lg:text-4xl mt-2 font-normal text-muted-foreground">Azərbaycanın Şəffaf Reytinq Platforması</span>
           </h1>
 
           {/* Subtitle */}
