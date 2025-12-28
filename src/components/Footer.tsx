@@ -11,7 +11,7 @@ const Footer = () => {
               <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
                 <Shield className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-display text-xl font-bold">Şəffaf Reytinq</span>
+              <span className="font-display text-xl font-bold">ratings.az</span>
             </div>
             <p className="text-primary-foreground/60 mb-6">
               Azərbaycanın ilk real istifadəçi rəylərinə əsaslanan şirkət reytinq platforması.
@@ -66,7 +66,7 @@ const Footer = () => {
 
         <div className="border-t border-primary-foreground/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-primary-foreground/40 text-sm">
-            © 2024 Şəffaf Reytinq. Bütün hüquqlar qorunur.
+            © 2024 ratings.az. Bütün hüquqlar qorunur.
           </p>
           <p className="text-primary-foreground/40 text-sm">
             SİMA inteqrasiyası ilə təhlükəsiz giriş

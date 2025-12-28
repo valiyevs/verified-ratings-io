@@ -11,14 +11,14 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 bg-gradient-hero rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
               <Shield className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-display text-xl font-bold text-foreground">
-              Şəffaf Reytinq
+              ratings.az
             </span>
-          </a>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
@@ -30,6 +30,9 @@ const Header = () => {
             </a>
             <Link to="/surveys" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               Sorğular
+            </Link>
+            <Link to="/compare" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+              Müqayisə
             </Link>
             <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               Necə işləyir?
@@ -66,6 +69,9 @@ const Header = () => {
               </a>
               <Link to="/surveys" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 Sorğular
+              </Link>
+              <Link to="/compare" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
+                Müqayisə
               </Link>
               <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 Necə işləyir?
