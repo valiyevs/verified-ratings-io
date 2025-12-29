@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Shield, Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AuthPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { user, signIn, signUp, loading } = useAuth();
   
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +28,13 @@ const AuthPage = () => {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerFin, setRegisterFin] = useState("");
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !loading) {
+      navigate("/");
+    }
+  }, [user, loading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,15 +50,32 @@ const AuthPage = () => {
 
     setIsLoading(true);
     
-    // Simulate login
-    setTimeout(() => {
-      setIsLoading(false);
+    const { error } = await signIn(loginEmail, loginPassword);
+    
+    setIsLoading(false);
+    
+    if (error) {
+      let errorMessage = "Daxil olma zamanı xəta baş verdi";
+      
+      if (error.message.includes("Invalid login credentials")) {
+        errorMessage = "Email və ya şifrə yanlışdır";
+      } else if (error.message.includes("Email not confirmed")) {
+        errorMessage = "Email təsdiqlənməyib";
+      }
+      
       toast({
-        title: "Uğurlu!",
-        description: "Hesabınıza daxil oldunuz",
+        title: "Xəta",
+        description: errorMessage,
+        variant: "destructive",
       });
-      navigate("/");
-    }, 1500);
+      return;
+    }
+
+    toast({
+      title: "Uğurlu!",
+      description: "Hesabınıza daxil oldunuz",
+    });
+    navigate("/");
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -73,17 +99,52 @@ const AuthPage = () => {
       return;
     }
 
+    if (registerPassword.length < 6) {
+      toast({
+        title: "Xəta",
+        description: "Şifrə ən azı 6 simvoldan ibarət olmalıdır",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     
-    // Simulate registration
-    setTimeout(() => {
-      setIsLoading(false);
+    const { error } = await signUp(registerEmail, registerPassword, registerName);
+    
+    setIsLoading(false);
+    
+    if (error) {
+      let errorMessage = "Qeydiyyat zamanı xəta baş verdi";
+      
+      if (error.message.includes("User already registered")) {
+        errorMessage = "Bu email artıq qeydiyyatdan keçib";
+      } else if (error.message.includes("Password")) {
+        errorMessage = "Şifrə tələblərə uyğun deyil";
+      }
+      
       toast({
-        title: "Uğurlu qeydiyyat!",
-        description: "Hesabınız yaradıldı. Daxil olun.",
+        title: "Xəta",
+        description: errorMessage,
+        variant: "destructive",
       });
-    }, 1500);
+      return;
+    }
+
+    toast({
+      title: "Uğurlu qeydiyyat!",
+      description: "Hesabınız yaradıldı. Avtomatik daxil oldunuz.",
+    });
+    navigate("/");
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -119,7 +180,7 @@ const AuthPage = () => {
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">{t("nav.login")}</CardTitle>
               <CardDescription>
-                SİMA ilə doğrulanmış hesabınıza daxil olun
+                Hesabınıza daxil olun və ya qeydiyyatdan keçin
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -205,7 +266,7 @@ const AuthPage = () => {
                           className="pl-10 uppercase"
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground">SİMA doğrulaması üçün FİN kodunuz tələb olunur</p>
+                      <p className="text-xs text-muted-foreground">Doğrulama üçün FİN kodunuz tələb olunur</p>
                     </div>
                     
                     <div className="space-y-2">
@@ -230,7 +291,7 @@ const AuthPage = () => {
                         <Input
                           id="register-password"
                           type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
+                          placeholder="Minimum 6 simvol"
                           value={registerPassword}
                           onChange={(e) => setRegisterPassword(e.target.value)}
                           className="pl-10 pr-10"
