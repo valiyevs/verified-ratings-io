@@ -1,13 +1,28 @@
 import { Button } from "@/components/ui/button";
-import { Shield, Menu, X } from "lucide-react";
+import { Shield, Menu, X, LogOut, User } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t } = useLanguage();
+  const { user, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-card/90 backdrop-blur-md border-b border-border">
@@ -45,9 +60,36 @@ const Header = () => {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-2">
             <LanguageSwitcher />
-            <Link to="/auth">
-              <Button variant="ghost">{t("nav.login")}</Button>
-            </Link>
+            {!loading && (
+              <>
+                {user ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="gap-2">
+                        <User className="w-4 h-4" />
+                        <span className="max-w-[120px] truncate">
+                          {user.user_metadata?.full_name || user.email?.split("@")[0]}
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem className="text-muted-foreground text-sm">
+                        {user.email}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Çıxış
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Link to="/auth">
+                    <Button variant="ghost">{t("nav.login")}</Button>
+                  </Link>
+                )}
+              </>
+            )}
             <Link to="/search">
               <Button variant="hero">{t("nav.writeReview")}</Button>
             </Link>
@@ -88,9 +130,26 @@ const Header = () => {
                 {t("nav.forBusiness")}
               </a>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Link to="/auth">
-                  <Button variant="outline" className="w-full">{t("nav.login")}</Button>
-                </Link>
+                {!loading && (
+                  <>
+                    {user ? (
+                      <>
+                        <div className="px-2 py-2 text-sm text-muted-foreground">
+                          <User className="w-4 h-4 inline mr-2" />
+                          {user.user_metadata?.full_name || user.email}
+                        </div>
+                        <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Çıxış
+                        </Button>
+                      </>
+                    ) : (
+                      <Link to="/auth">
+                        <Button variant="outline" className="w-full">{t("nav.login")}</Button>
+                      </Link>
+                    )}
+                  </>
+                )}
                 <Link to="/search">
                   <Button variant="hero" className="w-full">{t("nav.writeReview")}</Button>
                 </Link>
