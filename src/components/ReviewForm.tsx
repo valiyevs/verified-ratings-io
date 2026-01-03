@@ -1,74 +1,47 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Star, X, Upload, Send } from "lucide-react";
-import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Star, X, Send } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface ReviewFormProps {
   companyName: string;
+  companyId: string;
   onClose: () => void;
+  onSubmit: (data: { title: string; content: string; rating: number }) => void;
 }
 
-const criteria = [
-  { id: "service", label: "Xidmət keyfiyyəti" },
-  { id: "price", label: "Qiymət/Dəyər" },
-  { id: "speed", label: "Sürət" },
-  { id: "support", label: "Müştəri dəstəyi" },
-];
-
-const ReviewForm = ({ companyName, onClose }: ReviewFormProps) => {
-  const [ratings, setRatings] = useState<Record<string, number>>({
-    service: 0,
-    price: 0,
-    speed: 0,
-    support: 0,
-  });
-  const [hoverRatings, setHoverRatings] = useState<Record<string, number>>({});
+const ReviewForm = ({ companyName, companyId, onClose, onSubmit }: ReviewFormProps) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [title, setTitle] = useState("");
   const [reviewText, setReviewText] = useState("");
-  const [hasReceipt, setHasReceipt] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const hasAllRatings = Object.values(ratings).every(r => r > 0);
-    if (!hasAllRatings) {
-      toast.error("Zəhmət olmasa bütün meyarları qiymətləndirin");
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    if (rating === 0) {
+      return;
+    }
+    if (title.length < 3) {
       return;
     }
     if (reviewText.length < 20) {
-      toast.error("Rəy mətni ən azı 20 simvol olmalıdır");
       return;
     }
 
-    toast.success("Rəyiniz uğurla göndərildi! Təsdiq edildikdən sonra yayımlanacaq.");
-    onClose();
+    onSubmit({ title, content: reviewText, rating });
   };
 
-  const renderStars = (criteriaId: string) => {
-    const currentRating = hoverRatings[criteriaId] || ratings[criteriaId];
-    
-    return (
-      <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            className="p-1 transition-transform hover:scale-110"
-            onMouseEnter={() => setHoverRatings({ ...hoverRatings, [criteriaId]: star })}
-            onMouseLeave={() => setHoverRatings({ ...hoverRatings, [criteriaId]: 0 })}
-            onClick={() => setRatings({ ...ratings, [criteriaId]: star })}
-          >
-            <Star
-              className={`w-7 h-7 transition-colors ${
-                star <= currentRating
-                  ? "text-gold fill-gold"
-                  : "text-border"
-              }`}
-            />
-          </button>
-        ))}
-      </div>
-    );
-  };
+  const currentRating = hoverRating || rating;
 
   return (
     <div className="bg-card rounded-2xl p-6 md:p-8 shadow-lg border border-border animate-scale-in">
@@ -84,73 +57,86 @@ const ReviewForm = ({ companyName, onClose }: ReviewFormProps) => {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Rating criteria */}
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground mb-2">
-            Hər meyar üzrə qiymət verin:
-          </p>
-          {criteria.map((criterion) => (
-            <div key={criterion.id} className="flex items-center justify-between">
-              <span className="text-foreground font-medium">{criterion.label}</span>
-              {renderStars(criterion.id)}
+      {!user ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground mb-4">Rəy yazmaq üçün daxil olun</p>
+          <Button onClick={() => navigate('/auth')}>Daxil ol</Button>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Rating */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Ümumi qiymət
+            </label>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  className="p-1 transition-transform hover:scale-110"
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  onClick={() => setRating(star)}
+                >
+                  <Star
+                    className={`w-8 h-8 transition-colors ${
+                      star <= currentRating
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-border"
+                    }`}
+                  />
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
-
-        {/* Review text */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
-            Rəyinizi yazın
-          </label>
-          <textarea
-            value={reviewText}
-            onChange={(e) => setReviewText(e.target.value)}
-            placeholder="Təcrübənizi ətraflı paylaşın. Bu digər istifadəçilərə kömək edəcək..."
-            className="w-full h-32 px-4 py-3 bg-secondary border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-all"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Minimum 20 simvol ({reviewText.length}/20)
-          </p>
-        </div>
-
-        {/* Receipt upload */}
-        <div className="flex items-center gap-4 p-4 bg-secondary/50 rounded-xl border border-dashed border-border">
-          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-            <Upload className="w-6 h-6 text-primary" />
           </div>
-          <div className="flex-1">
-            <p className="font-medium text-foreground">Qəbz və ya şəkil əlavə edin</p>
-            <p className="text-sm text-muted-foreground">Rəyinizin dürüstlüyünü təsdiqləyin</p>
-          </div>
-          <label className="cursor-pointer">
-            <input
-              type="checkbox"
-              checked={hasReceipt}
-              onChange={(e) => setHasReceipt(e.target.checked)}
-              className="sr-only"
+
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Başlıq
+            </label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Rəyinizin qısa xülasəsi"
+              className="w-full"
             />
-            <div className={`w-12 h-7 rounded-full transition-colors ${hasReceipt ? 'bg-primary' : 'bg-border'} relative`}>
-              <div className={`absolute top-1 w-5 h-5 bg-card rounded-full shadow transition-all ${hasReceipt ? 'right-1' : 'left-1'}`} />
-            </div>
-          </label>
-        </div>
+          </div>
 
-        {/* Submit */}
-        <div className="flex items-center gap-4 pt-4">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-            Ləğv et
-          </Button>
-          <Button type="submit" variant="hero" className="flex-1">
-            <Send className="w-4 h-4 mr-2" />
-            Göndər
-          </Button>
-        </div>
+          {/* Review text */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Rəyinizi yazın
+            </label>
+            <textarea
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              placeholder="Təcrübənizi ətraflı paylaşın. Bu digər istifadəçilərə kömək edəcək..."
+              className="w-full h-32 px-4 py-3 bg-secondary border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-all"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Minimum 20 simvol ({reviewText.length}/20)
+            </p>
+          </div>
 
-        <p className="text-xs text-center text-muted-foreground">
-          Rəyiniz SİMA ilə doğrulanmış hesabınızla əlaqələndiriləcək
-        </p>
-      </form>
+          {/* Submit */}
+          <div className="flex items-center gap-4 pt-4">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+              Ləğv et
+            </Button>
+            <Button 
+              type="submit" 
+              variant="hero" 
+              className="flex-1"
+              disabled={rating === 0 || title.length < 3 || reviewText.length < 20}
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Göndər
+            </Button>
+          </div>
+        </form>
+      )}
     </div>
   );
 };

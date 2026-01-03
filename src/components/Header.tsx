@@ -79,6 +79,10 @@ const Header = () => {
                         {user.email}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+                        <User className="w-4 h-4 mr-2" />
+                        Profilim
+                      </DropdownMenuItem>
                       {isModerator && (
                         <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer">
                           <Settings className="w-4 h-4 mr-2" />
