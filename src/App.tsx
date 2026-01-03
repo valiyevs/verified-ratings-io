@@ -13,6 +13,7 @@ import SurveyDetailPage from "./pages/SurveyDetailPage";
 import CreateSurveyPage from "./pages/CreateSurveyPage";
 import ComparePage from "./pages/ComparePage";
 import AuthPage from "./pages/AuthPage";
+import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/surveys/:surveyId" element={<SurveyDetailPage />} />
               <Route path="/compare" element={<ComparePage />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/admin" element={<AdminPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

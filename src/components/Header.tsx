@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Shield, Menu, X, LogOut, User } from "lucide-react";
+import { Shield, Menu, X, LogOut, User, Settings } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t } = useLanguage();
   const { user, signOut, loading } = useAuth();
+  const { isModerator } = useUserRole();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -77,6 +79,12 @@ const Header = () => {
                         {user.email}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
+                      {isModerator && (
+                        <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer">
+                          <Settings className="w-4 h-4 mr-2" />
+                          Admin Panel
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer">
                         <LogOut className="w-4 h-4 mr-2" />
                         Çıxış
