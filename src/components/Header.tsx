@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Shield, Menu, X, LogOut, User, Settings } from "lucide-react";
+import { Shield, Menu, X, LogOut, User, Settings, Building2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -83,6 +83,10 @@ const Header = () => {
                         <User className="w-4 h-4 mr-2" />
                         Profilim
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/add-company')} className="cursor-pointer">
+                        <Building2 className="w-4 h-4 mr-2" />
+                        Şirkət əlavə et
+                      </DropdownMenuItem>
                       {isModerator && (
                         <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer">
                           <Settings className="w-4 h-4 mr-2" />
@@ -150,6 +154,26 @@ const Header = () => {
                           <User className="w-4 h-4 inline mr-2" />
                           {user.user_metadata?.full_name || user.email}
                         </div>
+                        <Link to="/profile">
+                          <Button variant="ghost" className="w-full justify-start">
+                            <User className="w-4 h-4 mr-2" />
+                            Profilim
+                          </Button>
+                        </Link>
+                        <Link to="/add-company">
+                          <Button variant="ghost" className="w-full justify-start">
+                            <Building2 className="w-4 h-4 mr-2" />
+                            Şirkət əlavə et
+                          </Button>
+                        </Link>
+                        {isModerator && (
+                          <Link to="/admin">
+                            <Button variant="ghost" className="w-full justify-start">
+                              <Settings className="w-4 h-4 mr-2" />
+                              Admin Panel
+                            </Button>
+                          </Link>
+                        )}
                         <Button variant="outline" className="w-full" onClick={handleSignOut}>
                           <LogOut className="w-4 h-4 mr-2" />
                           Çıxış
