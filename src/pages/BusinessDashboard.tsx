@@ -8,12 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { 
   BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
   Star, 
   MessageSquare, 
   Users,
@@ -24,7 +26,14 @@ import {
   Loader2,
   ArrowLeft,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  Pencil,
+  Send,
+  Building2,
+  Phone,
+  Mail,
+  Globe,
+  MapPin
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
@@ -32,16 +41,24 @@ interface Company {
   id: string;
   name: string;
   category: string;
+  description: string | null;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  address: string | null;
   average_rating: number | null;
   review_count: number | null;
   response_rate: number | null;
   avg_response_time_hours: number | null;
   verified_reviews_count: number | null;
   subscription_plan: string | null;
+  status: string;
 }
 
 interface Review {
   id: string;
+  title: string;
+  content: string;
   rating: number;
   service_rating: number | null;
   price_rating: number | null;
@@ -49,6 +66,8 @@ interface Review {
   quality_rating: number | null;
   created_at: string;
   company_reply: string | null;
+  user_id: string;
+  reviewer_name?: string;
 }
 
 interface AIAnalysis {
@@ -59,6 +78,15 @@ interface AIAnalysis {
   common_themes: string[];
   sentiment_score: number;
   recommendation: string;
+}
+
+interface EditRequest {
+  name: string;
+  description: string;
+  email: string;
+  phone: string;
+  website: string;
+  address: string;
 }
 
 const BusinessDashboard = () => {
@@ -72,6 +100,24 @@ const BusinessDashboard = () => {
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [analyzingKeywords, setAnalyzingKeywords] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  
+  // Reply states
+  const [replyDialogOpen, setReplyDialogOpen] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
+  
+  // Edit states
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editRequest, setEditRequest] = useState<EditRequest>({
+    name: '',
+    description: '',
+    email: '',
+    phone: '',
+    website: '',
+    address: '',
+  });
+  const [submittingEdit, setSubmittingEdit] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -112,16 +158,118 @@ const BusinessDashboard = () => {
     setIsOwner(true);
     setCompany(companyData);
 
-    // Fetch reviews with criteria
+    // Fetch reviews with criteria and user info
     const { data: reviewsData } = await supabase
       .from('reviews')
-      .select('id, rating, service_rating, price_rating, speed_rating, quality_rating, created_at, company_reply')
+      .select('id, title, content, rating, service_rating, price_rating, speed_rating, quality_rating, created_at, company_reply, user_id')
       .eq('company_id', companyId)
       .eq('status', 'approved')
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false });
 
-    setReviews(reviewsData || []);
+    if (reviewsData) {
+      // Get reviewer names
+      const userIds = [...new Set(reviewsData.map(r => r.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', userIds);
+      
+      const reviewsWithNames = reviewsData.map(review => ({
+        ...review,
+        reviewer_name: profiles?.find(p => p.user_id === review.user_id)?.full_name || 'Anonim',
+      }));
+      setReviews(reviewsWithNames);
+    }
     setLoading(false);
+  };
+
+  // Reply to review
+  const handleReply = async () => {
+    if (!selectedReview || !replyText.trim()) return;
+    setSubmittingReply(true);
+    
+    try {
+      const { error } = await supabase
+        .from('reviews')
+        .update({ 
+          company_reply: replyText.trim(),
+          company_reply_at: new Date().toISOString()
+        })
+        .eq('id', selectedReview.id);
+      
+      if (error) throw error;
+      
+      // Send notification to user
+      await supabase.functions.invoke('notify-review-reply', {
+        body: {
+          reviewId: selectedReview.id,
+          userId: selectedReview.user_id,
+          companyName: company?.name,
+          replyContent: replyText.trim()
+        }
+      });
+      
+      toast({ title: 'Cavab göndərildi' });
+      setReplyDialogOpen(false);
+      setReplyText('');
+      setSelectedReview(null);
+      fetchCompanyData();
+    } catch (err) {
+      console.error('Reply error:', err);
+      toast({ title: 'Xəta baş verdi', variant: 'destructive' });
+    } finally {
+      setSubmittingReply(false);
+    }
+  };
+  
+  // Open edit dialog
+  const openEditDialog = () => {
+    if (company) {
+      setEditRequest({
+        name: company.name || '',
+        description: company.description || '',
+        email: company.email || '',
+        phone: company.phone || '',
+        website: company.website || '',
+        address: company.address || '',
+      });
+      setEditDialogOpen(true);
+    }
+  };
+  
+  // Submit edit request (sets status to pending for admin approval)
+  const handleEditSubmit = async () => {
+    if (!company) return;
+    setSubmittingEdit(true);
+    
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .update({
+          name: editRequest.name,
+          description: editRequest.description,
+          email: editRequest.email,
+          phone: editRequest.phone,
+          website: editRequest.website,
+          address: editRequest.address,
+          status: 'pending' // Set to pending for admin approval
+        })
+        .eq('id', company.id);
+      
+      if (error) throw error;
+      
+      toast({ 
+        title: 'Dəyişiklik sorğusu göndərildi', 
+        description: 'Dəyişikliklər admin tərəfindən təsdiqləndikdən sonra görünəcək.' 
+      });
+      setEditDialogOpen(false);
+      fetchCompanyData();
+    } catch (err) {
+      console.error('Edit error:', err);
+      toast({ title: 'Xəta baş verdi', variant: 'destructive' });
+    } finally {
+      setSubmittingEdit(false);
+    }
   };
 
   const analyzeKeywords = async () => {
@@ -211,10 +359,19 @@ const BusinessDashboard = () => {
               {company.name} - Dashboard
             </h1>
             <p className="text-muted-foreground mt-1">Şirkətinizin analitikası və performansı</p>
+            {company.status === 'pending' && (
+              <Badge variant="secondary" className="mt-2">Dəyişikliklər admin təsdiqi gözləyir</Badge>
+            )}
           </div>
-          <Badge variant={company.subscription_plan === 'free' ? 'secondary' : 'default'}>
-            {company.subscription_plan?.toUpperCase() || 'FREE'} Plan
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={openEditDialog}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Redaktə et
+            </Button>
+            <Badge variant={company.subscription_plan === 'free' ? 'secondary' : 'default'}>
+              {company.subscription_plan?.toUpperCase() || 'FREE'} Plan
+            </Badge>
+          </div>
         </div>
 
         {/* Key Metrics */}
@@ -271,7 +428,15 @@ const BusinessDashboard = () => {
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
             <TabsTrigger value="overview">Ümumi Baxış</TabsTrigger>
+            <TabsTrigger value="reviews">
+              <MessageSquare className="h-4 w-4 mr-1" />
+              Rəylər ({reviews.length})
+            </TabsTrigger>
             <TabsTrigger value="criteria">Meyarlar</TabsTrigger>
+            <TabsTrigger value="company-info">
+              <Building2 className="h-4 w-4 mr-1" />
+              Şirkət Məlumatları
+            </TabsTrigger>
             <TabsTrigger value="ai-analysis">AI Analiz</TabsTrigger>
           </TabsList>
 
@@ -327,6 +492,143 @@ const BusinessDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Reviews Tab */}
+          <TabsContent value="reviews" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  Müştəri Rəyləri
+                </CardTitle>
+                <CardDescription>
+                  Müştərilərin rəylərinə birbaşa cavab verin
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {reviews.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Hələ rəy yoxdur</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <div key={review.id} className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold">{review.title}</h4>
+                              <div className="flex items-center gap-1">
+                                <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                                <span className="text-sm font-medium">{review.rating}</span>
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {review.reviewer_name} • {new Date(review.created_at).toLocaleDateString('az-AZ')}
+                            </p>
+                          </div>
+                          {!review.company_reply && (
+                            <Button 
+                              size="sm" 
+                              onClick={() => {
+                                setSelectedReview(review);
+                                setReplyDialogOpen(true);
+                              }}
+                            >
+                              <Send className="h-4 w-4 mr-1" />
+                              Cavab ver
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-sm mb-3">{review.content}</p>
+                        
+                        {review.company_reply && (
+                          <div className="bg-muted p-3 rounded-lg">
+                            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                              <CheckCircle2 className="h-3 w-3 text-green-500" />
+                              Şirkət cavabı
+                            </p>
+                            <p className="text-sm">{review.company_reply}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Company Info Tab */}
+          <TabsContent value="company-info" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  Şirkət Məlumatları
+                </CardTitle>
+                <CardDescription>
+                  Şirkət məlumatlarını yeniləyin. Dəyişikliklər admin tərəfindən təsdiqlənəcək.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                      <Building2 className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Şirkət adı</p>
+                        <p className="font-medium">{company.name}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                      <Mail className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Email</p>
+                        <p className="font-medium">{company.email || 'Qeyd edilməyib'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                      <Phone className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Telefon</p>
+                        <p className="font-medium">{company.phone || 'Qeyd edilməyib'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                      <Globe className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Website</p>
+                        <p className="font-medium">{company.website || 'Qeyd edilməyib'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                      <MapPin className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Ünvan</p>
+                        <p className="font-medium">{company.address || 'Qeyd edilməyib'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {company.description && (
+                  <div className="mt-6 p-4 bg-muted rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-2">Təsvir</p>
+                    <p className="text-sm">{company.description}</p>
+                  </div>
+                )}
+                <div className="mt-6">
+                  <Button onClick={openEditDialog}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Məlumatları yenilə
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="criteria" className="space-y-4">
@@ -487,6 +789,125 @@ const BusinessDashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Reply Dialog */}
+      <Dialog open={replyDialogOpen} onOpenChange={setReplyDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rəyə cavab ver</DialogTitle>
+            <DialogDescription>
+              {selectedReview?.reviewer_name} adlı müştərinin rəyinə cavab yazın
+            </DialogDescription>
+          </DialogHeader>
+          {selectedReview && (
+            <div className="space-y-4">
+              <div className="bg-muted p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                  <span className="font-medium">{selectedReview.rating}/5</span>
+                </div>
+                <p className="text-sm font-medium">{selectedReview.title}</p>
+                <p className="text-sm text-muted-foreground">{selectedReview.content}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Cavabınız</Label>
+                <Textarea
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Müştəri rəyinə cavabınızı yazın..."
+                  rows={4}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReplyDialogOpen(false)}>
+              Ləğv et
+            </Button>
+            <Button onClick={handleReply} disabled={submittingReply || !replyText.trim()}>
+              {submittingReply ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+              Göndər
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Şirkət məlumatlarını yenilə</DialogTitle>
+            <DialogDescription>
+              Dəyişikliklər admin tərəfindən təsdiqlənəndən sonra aktiv olacaq
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Şirkət adı</Label>
+              <Input
+                id="name"
+                value={editRequest.name}
+                onChange={(e) => setEditRequest({ ...editRequest, name: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="description">Təsvir</Label>
+              <Textarea
+                id="description"
+                value={editRequest.description}
+                onChange={(e) => setEditRequest({ ...editRequest, description: e.target.value })}
+                rows={3}
+              />
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={editRequest.email}
+                  onChange={(e) => setEditRequest({ ...editRequest, email: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="phone">Telefon</Label>
+                <Input
+                  id="phone"
+                  value={editRequest.phone}
+                  onChange={(e) => setEditRequest({ ...editRequest, phone: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  value={editRequest.website}
+                  onChange={(e) => setEditRequest({ ...editRequest, website: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="address">Ünvan</Label>
+                <Input
+                  id="address"
+                  value={editRequest.address}
+                  onChange={(e) => setEditRequest({ ...editRequest, address: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Ləğv et
+            </Button>
+            <Button onClick={handleEditSubmit} disabled={submittingEdit}>
+              {submittingEdit ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              Təsdiqlə
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
