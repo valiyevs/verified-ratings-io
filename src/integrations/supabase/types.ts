@@ -68,6 +68,35 @@ export type Database = {
         }
         Relationships: []
       }
+      company_followers: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_followers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -98,13 +127,50 @@ export type Database = {
         }
         Relationships: []
       }
+      review_helpful: {
+        Row: {
+          created_at: string
+          id: string
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_helpful_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           company_id: string
+          company_reply: string | null
+          company_reply_at: string | null
           content: string
           created_at: string
+          helpful_count: number | null
           id: string
+          image_url: string | null
+          price_rating: number | null
+          quality_rating: number | null
           rating: number
+          service_rating: number | null
+          speed_rating: number | null
           status: string
           title: string
           updated_at: string
@@ -112,10 +178,18 @@ export type Database = {
         }
         Insert: {
           company_id: string
+          company_reply?: string | null
+          company_reply_at?: string | null
           content: string
           created_at?: string
+          helpful_count?: number | null
           id?: string
+          image_url?: string | null
+          price_rating?: number | null
+          quality_rating?: number | null
           rating: number
+          service_rating?: number | null
+          speed_rating?: number | null
           status?: string
           title: string
           updated_at?: string
@@ -123,10 +197,18 @@ export type Database = {
         }
         Update: {
           company_id?: string
+          company_reply?: string | null
+          company_reply_at?: string | null
           content?: string
           created_at?: string
+          helpful_count?: number | null
           id?: string
+          image_url?: string | null
+          price_rating?: number | null
+          quality_rating?: number | null
           rating?: number
+          service_rating?: number | null
+          speed_rating?: number | null
           status?: string
           title?: string
           updated_at?: string
