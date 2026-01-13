@@ -18,9 +18,11 @@ import {
   Globe, 
   MessageSquare,
   TrendingUp,
-  Users,
   Calendar,
-  Loader2
+  Loader2,
+  Heart,
+  Star,
+  Users
 } from "lucide-react";
 
 interface Company {
@@ -37,6 +39,7 @@ interface Company {
   average_rating: number | null;
   review_count: number | null;
   created_at: string;
+  owner_id: string | null;
 }
 
 interface Review {
@@ -48,6 +51,14 @@ interface Review {
   created_at: string;
   user_id: string;
   author_name?: string;
+  service_rating?: number;
+  price_rating?: number;
+  speed_rating?: number;
+  quality_rating?: number;
+  image_url?: string;
+  helpful_count?: number;
+  company_reply?: string;
+  company_reply_at?: string;
 }
 
 const CompanyPage = () => {
@@ -59,10 +70,39 @@ const CompanyPage = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+
+  // Average criteria ratings
+  const [avgServiceRating, setAvgServiceRating] = useState(0);
+  const [avgPriceRating, setAvgPriceRating] = useState(0);
+  const [avgSpeedRating, setAvgSpeedRating] = useState(0);
+  const [avgQualityRating, setAvgQualityRating] = useState(0);
+
+  const isCompanyOwner = user && company?.owner_id === user.id;
 
   useEffect(() => {
     fetchCompanyData();
   }, [companyId]);
+
+  useEffect(() => {
+    if (user && companyId) {
+      checkFollowStatus();
+    }
+  }, [user, companyId]);
+
+  const checkFollowStatus = async () => {
+    if (!user || !companyId) return;
+    
+    const { data } = await supabase
+      .from('company_followers')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('company_id', companyId)
+      .maybeSingle();
+    
+    setIsFollowing(!!data);
+  };
 
   const fetchCompanyData = async () => {
     if (!companyId) return;
@@ -82,6 +122,10 @@ const CompanyPage = () => {
     }
 
     setCompany(companyData);
+
+    // Fetch followers count (we need to count from all users, not just current user)
+    // Since RLS only allows users to see their own follows, we'll skip this for now
+    // and just show the follow button
 
     // Fetch approved reviews
     const { data: reviewsData } = await supabase
@@ -104,6 +148,15 @@ const CompanyPage = () => {
         author_name: profiles?.find(p => p.user_id === review.user_id)?.full_name || 'Anonim'
       }));
       setReviews(reviewsWithAuthors);
+
+      // Calculate average criteria ratings
+      const withCriteria = reviewsData.filter(r => r.service_rating);
+      if (withCriteria.length > 0) {
+        setAvgServiceRating(withCriteria.reduce((sum, r) => sum + (r.service_rating || 0), 0) / withCriteria.length);
+        setAvgPriceRating(withCriteria.reduce((sum, r) => sum + (r.price_rating || 0), 0) / withCriteria.length);
+        setAvgSpeedRating(withCriteria.reduce((sum, r) => sum + (r.speed_rating || 0), 0) / withCriteria.length);
+        setAvgQualityRating(withCriteria.reduce((sum, r) => sum + (r.quality_rating || 0), 0) / withCriteria.length);
+      }
     } else {
       setReviews([]);
     }
@@ -111,7 +164,48 @@ const CompanyPage = () => {
     setLoading(false);
   };
 
-  const handleReviewSubmit = async (data: { title: string; content: string; rating: number }) => {
+  const handleFollow = async () => {
+    if (!user) {
+      toast({ title: 'Daxil olun', description: 'İzləmək üçün hesaba daxil olun', variant: 'destructive' });
+      navigate('/auth');
+      return;
+    }
+
+    if (!company) return;
+
+    if (isFollowing) {
+      const { error } = await supabase
+        .from('company_followers')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('company_id', company.id);
+
+      if (!error) {
+        setIsFollowing(false);
+        toast({ title: 'İzləmə dayandırıldı' });
+      }
+    } else {
+      const { error } = await supabase
+        .from('company_followers')
+        .insert({ user_id: user.id, company_id: company.id });
+
+      if (!error) {
+        setIsFollowing(true);
+        toast({ title: 'Şirkət izlənilir!', description: 'Yeniliklər haqqında məlumatlandırılacaqsınız.' });
+      }
+    }
+  };
+
+  const handleReviewSubmit = async (data: { 
+    title: string; 
+    content: string; 
+    rating: number;
+    service_rating: number;
+    price_rating: number;
+    speed_rating: number;
+    quality_rating: number;
+    image_url?: string;
+  }) => {
     if (!user) {
       toast({ title: 'Rəy yazmaq üçün daxil olun', variant: 'destructive' });
       navigate('/auth');
@@ -128,6 +222,11 @@ const CompanyPage = () => {
         title: data.title,
         content: data.content,
         rating: data.rating,
+        service_rating: data.service_rating,
+        price_rating: data.price_rating,
+        speed_rating: data.speed_rating,
+        quality_rating: data.quality_rating,
+        image_url: data.image_url,
         status: 'pending'
       });
 
@@ -138,6 +237,38 @@ const CompanyPage = () => {
       setShowReviewForm(false);
     }
   };
+
+  const handleCompanyReply = async (reviewId: string, reply: string) => {
+    const { error } = await supabase
+      .from('reviews')
+      .update({ 
+        company_reply: reply, 
+        company_reply_at: new Date().toISOString() 
+      })
+      .eq('id', reviewId);
+
+    if (error) {
+      toast({ title: 'Xəta baş verdi', variant: 'destructive' });
+    } else {
+      toast({ title: 'Cavab göndərildi!' });
+      fetchCompanyData();
+    }
+  };
+
+  const CriteriaBar = ({ label, value }: { label: string; value: number }) => (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-medium text-foreground">{value.toFixed(1)}</span>
+      </div>
+      <div className="h-2 bg-secondary rounded-full overflow-hidden">
+        <div 
+          className="h-full bg-primary rounded-full transition-all"
+          style={{ width: `${(value / 5) * 100}%` }}
+        />
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -247,6 +378,14 @@ const CompanyPage = () => {
                   <MessageSquare className="w-5 h-5 mr-2" />
                   Rəy yaz
                 </Button>
+                <Button 
+                  variant={isFollowing ? "secondary" : "outline"} 
+                  size="lg" 
+                  onClick={handleFollow}
+                >
+                  <Heart className={`w-5 h-5 mr-2 ${isFollowing ? 'fill-red-500 text-red-500' : ''}`} />
+                  {isFollowing ? 'İzlənilir' : 'İzlə'}
+                </Button>
               </div>
             </div>
           </div>
@@ -273,13 +412,23 @@ const CompanyPage = () => {
                   {reviews.length > 0 ? (
                     reviews.map((review) => (
                       <ReviewCard 
-                        key={review.id} 
+                        key={review.id}
+                        id={review.id}
                         author={review.author_name || 'Anonim'}
                         date={new Date(review.created_at).toLocaleDateString('az-AZ', { day: 'numeric', month: 'long', year: 'numeric' })}
                         rating={review.rating}
                         text={review.content}
-                        helpful={0}
-                        hasReceipt={false}
+                        helpful={review.helpful_count || 0}
+                        hasReceipt={!!review.image_url}
+                        imageUrl={review.image_url}
+                        serviceRating={review.service_rating}
+                        priceRating={review.price_rating}
+                        speedRating={review.speed_rating}
+                        qualityRating={review.quality_rating}
+                        companyReply={review.company_reply}
+                        companyReplyAt={review.company_reply_at}
+                        isCompanyOwner={isCompanyOwner}
+                        onReplySubmit={handleCompanyReply}
                       />
                     ))
                   ) : (
@@ -301,14 +450,25 @@ const CompanyPage = () => {
             <div className="space-y-6">
               {/* Rating breakdown */}
               <div className="bg-card rounded-2xl p-6 shadow-card border border-border/50">
-                <h3 className="font-semibold text-lg text-foreground mb-4">Reytinq</h3>
-                <div className="text-center">
+                <h3 className="font-semibold text-lg text-foreground mb-4">Ümumi Reytinq</h3>
+                <div className="text-center mb-6">
                   <div className="text-5xl font-bold text-primary mb-2">
                     {(company.average_rating || 0).toFixed(1)}
                   </div>
                   <StarRating rating={company.average_rating || 0} size="lg" />
                   <p className="text-sm text-muted-foreground mt-2">{company.review_count || 0} rəy əsasında</p>
                 </div>
+
+                {/* Criteria breakdown */}
+                {(avgServiceRating > 0 || avgPriceRating > 0) && (
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <h4 className="font-medium text-sm text-foreground mb-3">Meyarlar üzrə</h4>
+                    <CriteriaBar label="Xidmət" value={avgServiceRating} />
+                    <CriteriaBar label="Qiymət" value={avgPriceRating} />
+                    <CriteriaBar label="Sürət" value={avgSpeedRating} />
+                    <CriteriaBar label="Keyfiyyət" value={avgQualityRating} />
+                  </div>
+                )}
               </div>
 
               {/* Company stats */}
