@@ -214,6 +214,15 @@ const CompanyPage = () => {
 
     if (!company) return;
 
+    // Get reviewer name for notification
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const reviewerName = profileData?.full_name || 'Anonim istifadəçi';
+
     const { error } = await supabase
       .from('reviews')
       .insert({
@@ -235,6 +244,18 @@ const CompanyPage = () => {
     } else {
       toast({ title: 'Rəyiniz göndərildi!', description: 'Təsdiq edildikdən sonra yayımlanacaq.' });
       setShowReviewForm(false);
+
+      // Send email notification to company owner (async, don't wait)
+      supabase.functions.invoke('notify-company-owner', {
+        body: {
+          companyId: company.id,
+          reviewTitle: data.title,
+          reviewerName: reviewerName,
+          rating: data.rating
+        }
+      }).catch(err => {
+        console.log('Email notification failed:', err);
+      });
     }
   };
 
