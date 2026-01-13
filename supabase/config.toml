@@ -1,1 +1,13 @@
 project_id = "rkxqgdyqdffphysfwhdn"
+
+[functions.analyze-review]
+verify_jwt = false
+
+[functions.analyze-company-keywords]
+verify_jwt = false
+
+[functions.notify-company-owner]
+verify_jwt = false
+
+[functions.notify-review-reply]
+verify_jwt = false

@@ -45,18 +45,18 @@ const Header = () => {
             <Link to="/search" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               {t("nav.companies")}
             </Link>
-            <a href="#categories" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              {t("nav.categories")}
-            </a>
+            <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+              Dashboard
+            </Link>
             <Link to="/surveys" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               {t("nav.surveys")}
             </Link>
             <Link to="/compare" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               {t("nav.compare")}
             </Link>
-            <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              {t("nav.howItWorks")}
-            </a>
+            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+              Qiymətlər
+            </Link>
           </nav>
 
           {/* Desktop CTA */}
@@ -130,21 +130,18 @@ const Header = () => {
               <Link to="/search" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 {t("nav.companies")}
               </Link>
-              <a href="#categories" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
-                {t("nav.categories")}
-              </a>
+              <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
+                Dashboard
+              </Link>
               <Link to="/surveys" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 {t("nav.surveys")}
               </Link>
               <Link to="/compare" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 {t("nav.compare")}
               </Link>
-              <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
-                {t("nav.howItWorks")}
-              </a>
-              <a href="#business" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
-                {t("nav.forBusiness")}
-              </a>
+              <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
+                Qiymətlər
+              </Link>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 {!loading && (
                   <>

@@ -220,6 +220,35 @@ const CompanyPage = () => {
 
     if (!company) return;
 
+    // Check 12-month review limit
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    
+    const { data: existingReview, error: checkError } = await supabase
+      .from('reviews')
+      .select('id, created_at')
+      .eq('user_id', user.id)
+      .eq('company_id', company.id)
+      .gte('created_at', oneYearAgo.toISOString())
+      .limit(1);
+
+    if (checkError) {
+      console.error('Review check error:', checkError);
+    }
+
+    if (existingReview && existingReview.length > 0) {
+      const existingDate = new Date(existingReview[0].created_at);
+      const nextAllowedDate = new Date(existingDate);
+      nextAllowedDate.setFullYear(nextAllowedDate.getFullYear() + 1);
+      
+      toast({ 
+        title: '12 aylıq limit', 
+        description: `Bu şirkət üçün növbəti rəyi ${nextAllowedDate.toLocaleDateString('az-AZ')} tarixindən sonra yaza bilərsiniz.`, 
+        variant: 'destructive' 
+      });
+      return;
+    }
+
     // Get reviewer name for notification
     const { data: profileData } = await supabase
       .from('profiles')
@@ -229,7 +258,7 @@ const CompanyPage = () => {
 
     const reviewerName = profileData?.full_name || 'Anonim istifadəçi';
 
-    const { error } = await supabase
+    const { data: insertedReview, error } = await supabase
       .from('reviews')
       .insert({
         company_id: company.id,
@@ -243,13 +272,41 @@ const CompanyPage = () => {
         quality_rating: data.quality_rating,
         image_url: data.image_url,
         status: 'pending'
-      });
+      })
+      .select('id')
+      .single();
 
     if (error) {
       toast({ title: 'Xəta baş verdi', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Rəyiniz göndərildi!', description: 'Təsdiq edildikdən sonra yayımlanacaq.' });
       setShowReviewForm(false);
+
+      // Call AI analysis on the review (async, don't wait)
+      if (insertedReview?.id) {
+        supabase.functions.invoke('analyze-review', {
+          body: {
+            reviewId: insertedReview.id,
+            content: data.content,
+            companyId: company.id,
+            userId: user.id
+          }
+        }).then(async (response) => {
+          if (response.data?.analysis?.is_suspicious && response.data.analysis.confidence > 0.7) {
+            // Flag the review as suspicious
+            await supabase
+              .from('reviews')
+              .update({ 
+                is_flagged: true, 
+                flag_reason: `AI analysis: ${response.data.analysis.reasons?.join(', ') || 'Şübhəli məzmun'}` 
+              })
+              .eq('id', insertedReview.id);
+            console.log('Review flagged as suspicious:', response.data.analysis);
+          }
+        }).catch(err => {
+          console.log('AI analysis failed:', err);
+        });
+      }
 
       // Send email notification to company owner (async, don't wait)
       supabase.functions.invoke('notify-company-owner', {
@@ -279,6 +336,17 @@ const CompanyPage = () => {
     } else {
       toast({ title: 'Cavab göndərildi!' });
       fetchCompanyData();
+
+      // Send notification to the review author (async, don't wait)
+      supabase.functions.invoke('notify-review-reply', {
+        body: {
+          reviewId: reviewId,
+          companyName: company?.name || '',
+          replyContent: reply
+        }
+      }).catch(err => {
+        console.log('Reply notification failed:', err);
+      });
     }
   };
 
