@@ -7,12 +7,11 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { User, Star, Building2, Edit, Save, Loader2 } from 'lucide-react';
+import { User, Star, Building2, Edit, Save, Loader2, Heart, X } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -44,6 +43,20 @@ interface UserCompany {
   created_at: string;
 }
 
+interface FollowedCompany {
+  id: string;
+  company_id: string;
+  created_at: string;
+  company?: {
+    id: string;
+    name: string;
+    category: string;
+    logo_url: string | null;
+    average_rating: number | null;
+    review_count: number | null;
+  };
+}
+
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -52,6 +65,7 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<UserReview[]>([]);
   const [companies, setCompanies] = useState<UserCompany[]>([]);
+  const [followedCompanies, setFollowedCompanies] = useState<FollowedCompany[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -117,6 +131,31 @@ const ProfilePage = () => {
       .order('created_at', { ascending: false });
     
     setCompanies(companiesData || []);
+
+    // Fetch followed companies
+    const { data: followsData } = await supabase
+      .from('company_followers')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (followsData && followsData.length > 0) {
+      const followedCompanyIds = followsData.map(f => f.company_id);
+      const { data: followedCompaniesData } = await supabase
+        .from('companies')
+        .select('id, name, category, logo_url, average_rating, review_count')
+        .in('id', followedCompanyIds)
+        .eq('status', 'approved');
+
+      const followsWithCompanies = followsData.map(follow => ({
+        ...follow,
+        company: followedCompaniesData?.find(c => c.id === follow.company_id)
+      }));
+      setFollowedCompanies(followsWithCompanies.filter(f => f.company));
+    } else {
+      setFollowedCompanies([]);
+    }
+
     setLoading(false);
   };
 
@@ -137,6 +176,23 @@ const ProfilePage = () => {
       fetchData();
     }
     setSaving(false);
+  };
+
+  const handleUnfollow = async (companyId: string) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('company_followers')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('company_id', companyId);
+
+    if (error) {
+      toast({ title: 'Xəta baş verdi', variant: 'destructive' });
+    } else {
+      toast({ title: 'Şirkət izləmədən çıxarıldı' });
+      fetchData();
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -207,7 +263,7 @@ const ProfilePage = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="grid grid-cols-4 gap-4 text-center">
                 <div>
                   <p className="text-2xl font-bold">{reviews.length}</p>
                   <p className="text-sm text-muted-foreground">Rəylər</p>
@@ -215,6 +271,10 @@ const ProfilePage = () => {
                 <div>
                   <p className="text-2xl font-bold">{companies.length}</p>
                   <p className="text-sm text-muted-foreground">Şirkətlər</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{followedCompanies.length}</p>
+                  <p className="text-sm text-muted-foreground">İzlənənlər</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold">
@@ -226,7 +286,7 @@ const ProfilePage = () => {
             </CardContent>
           </Card>
 
-          {/* Tabs for Reviews and Companies */}
+          {/* Tabs for Reviews, Companies and Followed */}
           <Tabs defaultValue="reviews" className="space-y-4">
             <TabsList>
               <TabsTrigger value="reviews">
@@ -236,6 +296,10 @@ const ProfilePage = () => {
               <TabsTrigger value="companies">
                 <Building2 className="h-4 w-4 mr-2" />
                 Şirkətlərim ({companies.length})
+              </TabsTrigger>
+              <TabsTrigger value="followed">
+                <Heart className="h-4 w-4 mr-2" />
+                İzlədiklərim ({followedCompanies.length})
               </TabsTrigger>
             </TabsList>
 
@@ -289,7 +353,7 @@ const ProfilePage = () => {
                   <CardContent className="py-12 text-center">
                     <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">Hələ heç bir şirkət qeydiyyatdan keçirməmisiniz</p>
-                    <Button className="mt-4" onClick={() => navigate('/surveys/create')}>
+                    <Button className="mt-4" onClick={() => navigate('/add-company')}>
                       Şirkət əlavə et
                     </Button>
                   </CardContent>
@@ -317,6 +381,77 @@ const ProfilePage = () => {
                           <span className="text-xs text-muted-foreground">
                             {new Date(company.created_at).toLocaleDateString('az-AZ')}
                           </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="followed">
+              {followedCompanies.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Hələ heç bir şirkət izləmirsiniz</p>
+                    <Button className="mt-4" onClick={() => navigate('/search')}>
+                      Şirkətlərə bax
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {followedCompanies.map((follow) => (
+                    <Card key={follow.id}>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                          <div 
+                            className="flex items-center gap-4 cursor-pointer flex-1"
+                            onClick={() => navigate(`/company/${follow.company?.id}`)}
+                          >
+                            <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                              {follow.company?.logo_url ? (
+                                <img 
+                                  src={follow.company.logo_url} 
+                                  alt={follow.company.name} 
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <Building2 className="w-6 h-6 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold hover:text-primary transition-colors">
+                                {follow.company?.name}
+                              </h3>
+                              <p className="text-sm text-muted-foreground">{follow.company?.category}</p>
+                              <div className="flex items-center gap-3 mt-1 text-sm">
+                                <span className="flex items-center gap-1">
+                                  <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                                  {follow.company?.average_rating?.toFixed(1) || '0.0'}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  {follow.company?.review_count || 0} rəy
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(follow.created_at).toLocaleDateString('az-AZ')}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUnfollow(follow.company_id);
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
