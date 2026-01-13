@@ -6,13 +6,17 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Shield, Building2, MessageSquare, Users, Check, X, Loader2 } from 'lucide-react';
+import { Shield, Building2, MessageSquare, Users, Check, X, Loader2, Eye, Image, Star, ExternalLink } from 'lucide-react';
 
 interface Company {
   id: string;
@@ -21,6 +25,15 @@ interface Company {
   status: string;
   created_at: string;
   owner_id: string | null;
+  description: string | null;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  address: string | null;
+  average_rating: number | null;
+  review_count: number | null;
+  owner_name?: string;
+  owner_email?: string;
 }
 
 interface Review {
@@ -32,6 +45,15 @@ interface Review {
   created_at: string;
   company_id: string;
   user_id: string;
+  image_url: string | null;
+  service_rating: number | null;
+  price_rating: number | null;
+  speed_rating: number | null;
+  quality_rating: number | null;
+  helpful_count: number | null;
+  company_name?: string;
+  reviewer_name?: string;
+  reviewer_email?: string;
 }
 
 interface UserWithRole {
@@ -52,6 +74,17 @@ const AdminPage = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Company detail dialog
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [companyDialogOpen, setCompanyDialogOpen] = useState(false);
+  const [companyStatusNote, setCompanyStatusNote] = useState('');
+
+  // Review detail dialog
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState('');
 
   useEffect(() => {
     if (!authLoading && !roleLoading) {
@@ -82,16 +115,52 @@ const AdminPage = () => {
       .from('companies')
       .select('*')
       .order('created_at', { ascending: false });
-    
-    setCompanies(companiesData || []);
 
-    // Fetch reviews
+    // Get owner info for companies
+    if (companiesData) {
+      const ownerIds = [...new Set(companiesData.filter(c => c.owner_id).map(c => c.owner_id))];
+      const { data: ownerProfiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', ownerIds);
+
+      const companiesWithOwners = companiesData.map(company => ({
+        ...company,
+        owner_name: ownerProfiles?.find(p => p.user_id === company.owner_id)?.full_name || undefined,
+        owner_email: ownerProfiles?.find(p => p.user_id === company.owner_id)?.email || undefined,
+      }));
+      setCompanies(companiesWithOwners);
+    }
+
+    // Fetch reviews with company and user info
     const { data: reviewsData } = await supabase
       .from('reviews')
       .select('*')
       .order('created_at', { ascending: false });
-    
-    setReviews(reviewsData || []);
+
+    if (reviewsData) {
+      // Get company names
+      const companyIds = [...new Set(reviewsData.map(r => r.company_id))];
+      const { data: companiesForReviews } = await supabase
+        .from('companies')
+        .select('id, name')
+        .in('id', companyIds);
+
+      // Get reviewer info
+      const userIds = [...new Set(reviewsData.map(r => r.user_id))];
+      const { data: reviewerProfiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', userIds);
+
+      const reviewsWithInfo = reviewsData.map(review => ({
+        ...review,
+        company_name: companiesForReviews?.find(c => c.id === review.company_id)?.name || 'Naməlum',
+        reviewer_name: reviewerProfiles?.find(p => p.user_id === review.user_id)?.full_name || undefined,
+        reviewer_email: reviewerProfiles?.find(p => p.user_id === review.user_id)?.email || undefined,
+      }));
+      setReviews(reviewsWithInfo);
+    }
 
     // Fetch users with profiles
     if (isAdmin) {
@@ -120,7 +189,7 @@ const AdminPage = () => {
     setLoading(false);
   };
 
-  const updateCompanyStatus = async (id: string, status: 'approved' | 'rejected') => {
+  const updateCompanyStatus = async (id: string, status: 'approved' | 'rejected' | 'pending') => {
     const { error } = await supabase
       .from('companies')
       .update({ status })
@@ -129,12 +198,18 @@ const AdminPage = () => {
     if (error) {
       toast({ title: 'Xəta baş verdi', variant: 'destructive' });
     } else {
-      toast({ title: status === 'approved' ? 'Şirkət təsdiqləndi' : 'Şirkət rədd edildi' });
+      const statusLabels: Record<string, string> = {
+        approved: 'təsdiqləndi',
+        rejected: 'rədd edildi',
+        pending: 'gözləməyə alındı',
+      };
+      toast({ title: `Şirkət ${statusLabels[status]}` });
+      setCompanyDialogOpen(false);
       fetchData();
     }
   };
 
-  const updateReviewStatus = async (id: string, status: 'approved' | 'rejected') => {
+  const updateReviewStatus = async (id: string, status: 'approved' | 'rejected' | 'pending') => {
     const { error } = await supabase
       .from('reviews')
       .update({ status })
@@ -143,7 +218,13 @@ const AdminPage = () => {
     if (error) {
       toast({ title: 'Xəta baş verdi', variant: 'destructive' });
     } else {
-      toast({ title: status === 'approved' ? 'Rəy təsdiqləndi' : 'Rəy rədd edildi' });
+      const statusLabels: Record<string, string> = {
+        approved: 'təsdiqləndi',
+        rejected: 'rədd edildi',
+        pending: 'gözləməyə alındı',
+      };
+      toast({ title: `Rəy ${statusLabels[status]}` });
+      setReviewDialogOpen(false);
       fetchData();
     }
   };
@@ -190,6 +271,40 @@ const AdminPage = () => {
     return <Badge variant={variants[status]}>{labels[status]}</Badge>;
   };
 
+  const renderStarRating = (rating: number | null, label: string) => {
+    if (rating === null) return null;
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">{label}:</span>
+        <div className="flex items-center">
+          {[...Array(5)].map((_, i) => (
+            <Star
+              key={i}
+              className={`h-4 w-4 ${i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+            />
+          ))}
+        </div>
+        <span className="text-sm font-medium">({rating})</span>
+      </div>
+    );
+  };
+
+  const openCompanyDetails = (company: Company) => {
+    setSelectedCompany(company);
+    setCompanyStatusNote('');
+    setCompanyDialogOpen(true);
+  };
+
+  const openReviewDetails = (review: Review) => {
+    setSelectedReview(review);
+    setReviewDialogOpen(true);
+  };
+
+  const openImagePreview = (url: string) => {
+    setPreviewImageUrl(url);
+    setImagePreviewOpen(true);
+  };
+
   if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -206,7 +321,7 @@ const AdminPage = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pt-24">
         <div className="flex items-center gap-3 mb-8">
           <Shield className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold">Admin Panel</h1>
@@ -262,6 +377,7 @@ const AdminPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Şirkət İdarəetməsi</CardTitle>
+                <CardDescription>Şirkətlərin ətraflı məlumatlarını görmək üçün "Bax" düyməsinə klikləyin</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -276,7 +392,9 @@ const AdminPage = () => {
                       <TableRow>
                         <TableHead>Ad</TableHead>
                         <TableHead>Kateqoriya</TableHead>
+                        <TableHead>Sahib</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Reytinq</TableHead>
                         <TableHead>Tarix</TableHead>
                         <TableHead>Əməliyyatlar</TableHead>
                       </TableRow>
@@ -286,28 +404,39 @@ const AdminPage = () => {
                         <TableRow key={company.id}>
                           <TableCell className="font-medium">{company.name}</TableCell>
                           <TableCell>{company.category}</TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <p>{company.owner_name || 'Naməlum'}</p>
+                              {company.owner_email && (
+                                <p className="text-xs text-muted-foreground">{company.owner_email}</p>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>{getStatusBadge(company.status)}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                              <span>{company.average_rating?.toFixed(1) || '0.0'}</span>
+                              <span className="text-xs text-muted-foreground">({company.review_count || 0})</span>
+                            </div>
+                          </TableCell>
                           <TableCell>{new Date(company.created_at).toLocaleDateString('az-AZ')}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              {company.status === 'pending' && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => updateCompanyStatus(company.id, 'approved')}
-                                  >
-                                    <Check className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => updateCompanyStatus(company.id, 'rejected')}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openCompanyDetails(company)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => navigate(`/company/${company.id}`)}
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -323,6 +452,7 @@ const AdminPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Rəy İdarəetməsi</CardTitle>
+                <CardDescription>Rəylərin ətraflı məlumatlarını görmək üçün "Bax" düyməsinə klikləyin</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -336,9 +466,11 @@ const AdminPage = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Başlıq</TableHead>
-                        <TableHead>Məzmun</TableHead>
+                        <TableHead>Şirkət</TableHead>
+                        <TableHead>Yazan</TableHead>
                         <TableHead>Reytinq</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Şəkil</TableHead>
                         <TableHead>Tarix</TableHead>
                         <TableHead>Əməliyyatlar</TableHead>
                       </TableRow>
@@ -346,31 +478,46 @@ const AdminPage = () => {
                     <TableBody>
                       {reviews.map((review) => (
                         <TableRow key={review.id}>
-                          <TableCell className="font-medium">{review.title}</TableCell>
-                          <TableCell className="max-w-xs truncate">{review.content}</TableCell>
-                          <TableCell>{'⭐'.repeat(review.rating)}</TableCell>
+                          <TableCell className="font-medium max-w-[150px] truncate">{review.title}</TableCell>
+                          <TableCell>{review.company_name}</TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <p>{review.reviewer_name || 'Anonim'}</p>
+                              {review.reviewer_email && (
+                                <p className="text-xs text-muted-foreground">{review.reviewer_email}</p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                              <span>{review.rating}</span>
+                            </div>
+                          </TableCell>
                           <TableCell>{getStatusBadge(review.status)}</TableCell>
+                          <TableCell>
+                            {review.image_url ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openImagePreview(review.image_url!)}
+                              >
+                                <Image className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
                           <TableCell>{new Date(review.created_at).toLocaleDateString('az-AZ')}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              {review.status === 'pending' && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => updateReviewStatus(review.id, 'approved')}
-                                  >
-                                    <Check className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => updateReviewStatus(review.id, 'rejected')}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openReviewDetails(review)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -454,6 +601,15 @@ const AdminPage = () => {
                                     +Admin
                                   </Button>
                                 )}
+                                {userItem.roles.includes('admin') && userItem.id !== user?.id && (
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => updateUserRole(userItem.id, 'admin', false)}
+                                  >
+                                    -Admin
+                                  </Button>
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>
@@ -469,6 +625,253 @@ const AdminPage = () => {
       </main>
 
       <Footer />
+
+      {/* Company Detail Dialog */}
+      <Dialog open={companyDialogOpen} onOpenChange={setCompanyDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Şirkət Ətraflı Məlumat</DialogTitle>
+            <DialogDescription>Şirkətin bütün məlumatlarını burada görə bilərsiniz</DialogDescription>
+          </DialogHeader>
+          
+          {selectedCompany && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Şirkət adı</Label>
+                  <p className="font-medium">{selectedCompany.name}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Kateqoriya</Label>
+                  <p>{selectedCompany.category}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Status</Label>
+                  <div className="mt-1">{getStatusBadge(selectedCompany.status)}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Qeydiyyat tarixi</Label>
+                  <p>{new Date(selectedCompany.created_at).toLocaleDateString('az-AZ')}</p>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">Sahib Məlumatları</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-muted-foreground">Ad Soyad</Label>
+                    <p>{selectedCompany.owner_name || 'Naməlum'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Email</Label>
+                    <p>{selectedCompany.owner_email || 'Naməlum'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">Əlaqə Məlumatları</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-muted-foreground">Email</Label>
+                    <p>{selectedCompany.email || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Telefon</Label>
+                    <p>{selectedCompany.phone || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Vebsayt</Label>
+                    <p>{selectedCompany.website || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Ünvan</Label>
+                    <p>{selectedCompany.address || '-'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">Statistika</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-muted-foreground">Orta reytinq</Label>
+                    <div className="flex items-center gap-2">
+                      <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                      <span className="font-medium">{selectedCompany.average_rating?.toFixed(1) || '0.0'}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Rəy sayı</Label>
+                    <p className="font-medium">{selectedCompany.review_count || 0}</p>
+                  </div>
+                </div>
+              </div>
+
+              {selectedCompany.description && (
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-3">Təsvir</h4>
+                  <p className="text-sm">{selectedCompany.description}</p>
+                </div>
+              )}
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">Status dəyişdir</h4>
+                <div className="flex gap-2">
+                  <Button
+                    variant={selectedCompany.status === 'pending' ? 'default' : 'outline'}
+                    onClick={() => updateCompanyStatus(selectedCompany.id, 'pending')}
+                    disabled={selectedCompany.status === 'pending'}
+                  >
+                    Gözləməyə al
+                  </Button>
+                  <Button
+                    variant={selectedCompany.status === 'approved' ? 'default' : 'outline'}
+                    onClick={() => updateCompanyStatus(selectedCompany.id, 'approved')}
+                    disabled={selectedCompany.status === 'approved'}
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    Təsdiqlə
+                  </Button>
+                  <Button
+                    variant={selectedCompany.status === 'rejected' ? 'destructive' : 'outline'}
+                    onClick={() => updateCompanyStatus(selectedCompany.id, 'rejected')}
+                    disabled={selectedCompany.status === 'rejected'}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Rədd et
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Review Detail Dialog */}
+      <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Rəy Ətraflı Məlumat</DialogTitle>
+            <DialogDescription>Rəyin bütün məlumatlarını burada görə bilərsiniz</DialogDescription>
+          </DialogHeader>
+          
+          {selectedReview && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Başlıq</Label>
+                  <p className="font-medium">{selectedReview.title}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Şirkət</Label>
+                  <p>{selectedReview.company_name}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Status</Label>
+                  <div className="mt-1">{getStatusBadge(selectedReview.status)}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Tarix</Label>
+                  <p>{new Date(selectedReview.created_at).toLocaleDateString('az-AZ')}</p>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">Yazan Haqqında</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-muted-foreground">Ad Soyad</Label>
+                    <p>{selectedReview.reviewer_name || 'Anonim'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Email</Label>
+                    <p>{selectedReview.reviewer_email || 'Naməlum'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">Reytinqlər</h4>
+                <div className="space-y-2">
+                  {renderStarRating(selectedReview.rating, 'Ümumi')}
+                  {renderStarRating(selectedReview.service_rating, 'Xidmət')}
+                  {renderStarRating(selectedReview.price_rating, 'Qiymət')}
+                  {renderStarRating(selectedReview.speed_rating, 'Sürət')}
+                  {renderStarRating(selectedReview.quality_rating, 'Keyfiyyət')}
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">Rəy Məzmunu</h4>
+                <p className="text-sm bg-muted p-4 rounded-lg">{selectedReview.content}</p>
+              </div>
+
+              {selectedReview.image_url && (
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-3">Əlavə edilən şəkil</h4>
+                  <img 
+                    src={selectedReview.image_url} 
+                    alt="Rəy şəkli" 
+                    className="max-h-64 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => openImagePreview(selectedReview.image_url!)}
+                  />
+                </div>
+              )}
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">Faydalılıq</h4>
+                <p className="text-sm">{selectedReview.helpful_count || 0} nəfər faydalı hesab etdi</p>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">Status dəyişdir</h4>
+                <div className="flex gap-2">
+                  <Button
+                    variant={selectedReview.status === 'pending' ? 'default' : 'outline'}
+                    onClick={() => updateReviewStatus(selectedReview.id, 'pending')}
+                    disabled={selectedReview.status === 'pending'}
+                  >
+                    Gözləməyə al
+                  </Button>
+                  <Button
+                    variant={selectedReview.status === 'approved' ? 'default' : 'outline'}
+                    onClick={() => updateReviewStatus(selectedReview.id, 'approved')}
+                    disabled={selectedReview.status === 'approved'}
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    Təsdiqlə
+                  </Button>
+                  <Button
+                    variant={selectedReview.status === 'rejected' ? 'destructive' : 'outline'}
+                    onClick={() => updateReviewStatus(selectedReview.id, 'rejected')}
+                    disabled={selectedReview.status === 'rejected'}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Rədd et
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={imagePreviewOpen} onOpenChange={setImagePreviewOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Şəkil önizləməsi</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center">
+            <img 
+              src={previewImageUrl} 
+              alt="Böyük şəkil" 
+              className="max-h-[70vh] rounded-lg"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
