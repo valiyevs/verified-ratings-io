@@ -5,6 +5,7 @@ import FeaturedSurveys from "@/components/FeaturedSurveys";
 import Categories from "@/components/Categories";
 import HowItWorks from "@/components/HowItWorks";
 import BusinessCTA from "@/components/BusinessCTA";
+import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -18,6 +19,7 @@ const Index = () => {
         <Categories />
         <HowItWorks />
         <BusinessCTA />
+        <FAQ />
       </main>
       <Footer />
     </div>
