@@ -11,7 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { User, Star, Building2, Edit, Save, Loader2, Heart, X } from 'lucide-react';
+import { User, Star, Building2, Edit, Save, Loader2, Heart, X, Bell, Mail } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface Profile {
   id: string;
@@ -20,6 +22,9 @@ interface Profile {
   email: string | null;
   avatar_url: string | null;
   created_at: string;
+  email_notifications_enabled: boolean | null;
+  review_reply_notifications: boolean | null;
+  company_update_notifications: boolean | null;
 }
 
 interface UserReview {
@@ -301,6 +306,10 @@ const ProfilePage = () => {
                 <Heart className="h-4 w-4 mr-2" />
                 İzlədiklərim ({followedCompanies.length})
               </TabsTrigger>
+              <TabsTrigger value="settings">
+                <Bell className="h-4 w-4 mr-2" />
+                Bildirişlər
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="reviews">
@@ -458,6 +467,99 @@ const ProfilePage = () => {
                   ))}
                 </div>
               )}
+            </TabsContent>
+
+            {/* Notification Settings Tab */}
+            <TabsContent value="settings">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bell className="h-5 w-5" />
+                    Bildiriş Parametrləri
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-5 w-5 text-primary" />
+                      <div>
+                        <Label className="font-medium">E-poçt bildirişləri</Label>
+                        <p className="text-sm text-muted-foreground">Bütün e-poçt bildirişlərini aktiv/deaktiv edin</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={profile?.email_notifications_enabled ?? true}
+                      onCheckedChange={async (checked) => {
+                        if (!user) return;
+                        const { error } = await supabase
+                          .from('profiles')
+                          .update({ email_notifications_enabled: checked })
+                          .eq('user_id', user.id);
+                        if (!error) {
+                          setProfile(prev => prev ? { ...prev, email_notifications_enabled: checked } : null);
+                          toast({ title: checked ? 'E-poçt bildirişləri aktiv edildi' : 'E-poçt bildirişləri deaktiv edildi' });
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Star className="h-5 w-5 text-yellow-500" />
+                      <div>
+                        <Label className="font-medium">Rəy cavabı bildirişləri</Label>
+                        <p className="text-sm text-muted-foreground">Şirkət rəyinizə cavab verdikdə bildiriş alın</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={profile?.review_reply_notifications ?? true}
+                      disabled={!profile?.email_notifications_enabled}
+                      onCheckedChange={async (checked) => {
+                        if (!user) return;
+                        const { error } = await supabase
+                          .from('profiles')
+                          .update({ review_reply_notifications: checked })
+                          .eq('user_id', user.id);
+                        if (!error) {
+                          setProfile(prev => prev ? { ...prev, review_reply_notifications: checked } : null);
+                          toast({ title: checked ? 'Rəy cavabı bildirişləri aktiv edildi' : 'Rəy cavabı bildirişləri deaktiv edildi' });
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Building2 className="h-5 w-5 text-blue-500" />
+                      <div>
+                        <Label className="font-medium">Şirkət yenilikləri</Label>
+                        <p className="text-sm text-muted-foreground">İzlədiyiniz şirkətlərdən yeniliklər alın</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={profile?.company_update_notifications ?? true}
+                      disabled={!profile?.email_notifications_enabled}
+                      onCheckedChange={async (checked) => {
+                        if (!user) return;
+                        const { error } = await supabase
+                          .from('profiles')
+                          .update({ company_update_notifications: checked })
+                          .eq('user_id', user.id);
+                        if (!error) {
+                          setProfile(prev => prev ? { ...prev, company_update_notifications: checked } : null);
+                          toast({ title: checked ? 'Şirkət bildirişləri aktiv edildi' : 'Şirkət bildirişləri deaktiv edildi' });
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {!profile?.email_notifications_enabled && (
+                    <p className="text-sm text-muted-foreground text-center">
+                      Digər bildiriş seçimlərini aktivləşdirmək üçün əvvəlcə e-poçt bildirişlərini aktiv edin.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>

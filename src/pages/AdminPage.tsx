@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Shield, Building2, MessageSquare, Users, Check, X, Loader2, Eye, Image, Star, ExternalLink } from 'lucide-react';
+import { Shield, Building2, MessageSquare, Users, Check, X, Loader2, Eye, Image, Star, ExternalLink, AlertTriangle, Flag } from 'lucide-react';
 
 interface Company {
   id: string;
@@ -51,6 +51,8 @@ interface Review {
   speed_rating: number | null;
   quality_rating: number | null;
   helpful_count: number | null;
+  is_flagged: boolean | null;
+  flag_reason: string | null;
   company_name?: string;
   reviewer_name?: string;
   reviewer_email?: string;
@@ -370,6 +372,10 @@ const AdminPage = () => {
           <TabsList>
             <TabsTrigger value="companies">Şirkətlər</TabsTrigger>
             <TabsTrigger value="reviews">Rəylər</TabsTrigger>
+            <TabsTrigger value="flagged" className="flex items-center gap-2">
+              <Flag className="h-4 w-4" />
+              Şübhəli ({reviews.filter(r => r.is_flagged).length})
+            </TabsTrigger>
             {isAdmin && <TabsTrigger value="users">İstifadəçilər</TabsTrigger>}
           </TabsList>
 
@@ -524,6 +530,99 @@ const AdminPage = () => {
                       ))}
                     </TableBody>
                   </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Flagged Reviews Tab */}
+          <TabsContent value="flagged">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                  AI Tərəfindən Flag Edilmiş Rəylər
+                </CardTitle>
+                <CardDescription>
+                  Bu rəylər AI analizi nəticəsində şübhəli olaraq qeyd edilib. Diqqətlə yoxlayın.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex justify-center p-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : reviews.filter(r => r.is_flagged).length === 0 ? (
+                  <div className="text-center py-12">
+                    <Check className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                    <p className="text-muted-foreground">Şübhəli rəy yoxdur</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.filter(r => r.is_flagged).map((review) => (
+                      <div key={review.id} className="border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-semibold">{review.title}</h4>
+                              {getStatusBadge(review.status)}
+                              <Badge variant="destructive" className="flex items-center gap-1">
+                                <Flag className="h-3 w-3" />
+                                Şübhəli
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {review.company_name} • {review.reviewer_name || 'Anonim'} • {new Date(review.created_at).toLocaleDateString('az-AZ')}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                            <span className="font-medium">{review.rating}</span>
+                          </div>
+                        </div>
+                        
+                        <p className="text-sm mb-3">{review.content}</p>
+                        
+                        {review.flag_reason && (
+                          <div className="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-3">
+                            <p className="text-sm font-medium text-red-700 dark:text-red-400 flex items-center gap-2">
+                              <AlertTriangle className="h-4 w-4" />
+                              AI Analiz Nəticəsi:
+                            </p>
+                            <p className="text-sm text-red-600 dark:text-red-300 mt-1">{review.flag_reason}</p>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => updateReviewStatus(review.id, 'approved')}
+                            className="flex items-center gap-1"
+                          >
+                            <Check className="h-4 w-4" />
+                            Təsdiqlə
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => updateReviewStatus(review.id, 'rejected')}
+                            className="flex items-center gap-1"
+                          >
+                            <X className="h-4 w-4" />
+                            Rədd et
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openReviewDetails(review)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </CardContent>
             </Card>

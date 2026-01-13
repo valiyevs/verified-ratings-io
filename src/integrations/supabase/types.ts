@@ -32,7 +32,9 @@ export type Database = {
           response_rate: number | null
           review_count: number | null
           status: string
+          subscription_expires_at: string | null
           subscription_plan: string | null
+          surveys_created_this_month: number | null
           updated_at: string
           verified_reviews_count: number | null
           website: string | null
@@ -54,7 +56,9 @@ export type Database = {
           response_rate?: number | null
           review_count?: number | null
           status?: string
+          subscription_expires_at?: string | null
           subscription_plan?: string | null
+          surveys_created_this_month?: number | null
           updated_at?: string
           verified_reviews_count?: number | null
           website?: string | null
@@ -76,7 +80,9 @@ export type Database = {
           response_rate?: number | null
           review_count?: number | null
           status?: string
+          subscription_expires_at?: string | null
           subscription_plan?: string | null
+          surveys_created_this_month?: number | null
           updated_at?: string
           verified_reviews_count?: number | null
           website?: string | null
@@ -115,12 +121,15 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          company_update_notifications: boolean | null
           created_at: string
           email: string | null
+          email_notifications_enabled: boolean | null
           full_name: string | null
           id: string
           is_fin_verified: boolean | null
           platform_activity_months: number | null
+          review_reply_notifications: boolean | null
           survey_participation_count: number | null
           total_reviews_count: number | null
           trust_score: number | null
@@ -129,12 +138,15 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          company_update_notifications?: boolean | null
           created_at?: string
           email?: string | null
+          email_notifications_enabled?: boolean | null
           full_name?: string | null
           id?: string
           is_fin_verified?: boolean | null
           platform_activity_months?: number | null
+          review_reply_notifications?: boolean | null
           survey_participation_count?: number | null
           total_reviews_count?: number | null
           trust_score?: number | null
@@ -143,12 +155,15 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          company_update_notifications?: boolean | null
           created_at?: string
           email?: string | null
+          email_notifications_enabled?: boolean | null
           full_name?: string | null
           id?: string
           is_fin_verified?: boolean | null
           platform_activity_months?: number | null
+          review_reply_notifications?: boolean | null
           survey_participation_count?: number | null
           total_reviews_count?: number | null
           trust_score?: number | null

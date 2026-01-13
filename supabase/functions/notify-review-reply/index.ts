@@ -46,16 +46,25 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Get user's email from profile
+    // Get user's email and notification preferences from profile
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("email, full_name")
+      .select("email, full_name, email_notifications_enabled, review_reply_notifications")
       .eq("user_id", review.user_id)
       .single();
 
     if (profileError || !profile?.email) {
       console.log("No email found for user");
       return new Response(JSON.stringify({ message: "No email to notify" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check if user has notifications enabled
+    if (profile.email_notifications_enabled === false || profile.review_reply_notifications === false) {
+      console.log("User has disabled reply notifications");
+      return new Response(JSON.stringify({ message: "User has disabled notifications" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

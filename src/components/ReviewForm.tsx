@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Star, X, Send, Upload, Image } from "lucide-react";
+import { Star, X, Send, Upload, AlertTriangle, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,7 +44,48 @@ const ReviewForm = ({ companyName, companyId, onClose, onSubmit }: ReviewFormPro
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  // 12-month limit state
+  const [hasRecentReview, setHasRecentReview] = useState(false);
+  const [nextAllowedDate, setNextAllowedDate] = useState<Date | null>(null);
+  const [checkingLimit, setCheckingLimit] = useState(true);
+
   const averageRating = Math.round((serviceRating + priceRating + speedRating + qualityRating) / 4);
+
+  useEffect(() => {
+    if (user && companyId) {
+      checkReviewLimit();
+    } else {
+      setCheckingLimit(false);
+    }
+  }, [user, companyId]);
+
+  const checkReviewLimit = async () => {
+    if (!user) {
+      setCheckingLimit(false);
+      return;
+    }
+
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+    const { data: existingReview } = await supabase
+      .from('reviews')
+      .select('id, created_at')
+      .eq('user_id', user.id)
+      .eq('company_id', companyId)
+      .gte('created_at', oneYearAgo.toISOString())
+      .limit(1);
+
+    if (existingReview && existingReview.length > 0) {
+      setHasRecentReview(true);
+      const existingDate = new Date(existingReview[0].created_at);
+      const nextDate = new Date(existingDate);
+      nextDate.setFullYear(nextDate.getFullYear() + 1);
+      setNextAllowedDate(nextDate);
+    }
+
+    setCheckingLimit(false);
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -89,6 +130,15 @@ const ReviewForm = ({ companyName, companyId, onClose, onSubmit }: ReviewFormPro
     
     if (!user) {
       navigate('/auth');
+      return;
+    }
+
+    if (hasRecentReview) {
+      toast({ 
+        title: '12 aylıq limit', 
+        description: `Bu şirkət üçün növbəti rəyi ${nextAllowedDate?.toLocaleDateString('az-AZ')} tarixindən sonra yaza bilərsiniz.`, 
+        variant: 'destructive' 
+      });
       return;
     }
 
@@ -185,6 +235,37 @@ const ReviewForm = ({ companyName, companyId, onClose, onSubmit }: ReviewFormPro
         <div className="text-center py-8">
           <p className="text-muted-foreground mb-4">Rəy yazmaq üçün daxil olun</p>
           <Button onClick={() => navigate('/auth')}>Daxil ol</Button>
+        </div>
+      ) : checkingLimit ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Yoxlanılır...</p>
+        </div>
+      ) : hasRecentReview ? (
+        <div className="text-center py-8">
+          <div className="w-16 h-16 mx-auto mb-4 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+            <Clock className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            12 Aylıq Rəy Limiti
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            Bu şirkət üçün son 12 ayda rəy yazmısınız.
+          </p>
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-center gap-2 text-yellow-700 dark:text-yellow-400">
+              <AlertTriangle className="w-5 h-5" />
+              <span className="font-medium">
+                Növbəti rəy tarixi: {nextAllowedDate?.toLocaleDateString('az-AZ', { 
+                  day: 'numeric', 
+                  month: 'long', 
+                  year: 'numeric' 
+                })}
+              </span>
+            </div>
+          </div>
+          <Button variant="outline" onClick={onClose}>
+            Bağla
+          </Button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
