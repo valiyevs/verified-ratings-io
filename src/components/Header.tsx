@@ -51,6 +51,9 @@ const Header = () => {
             <Link to="/compare" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               {t("nav.compare")}
             </Link>
+            <a href="/#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+              {t("nav.howItWorks")}
+            </a>
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               Qiymətlər
             </Link>
@@ -135,15 +138,15 @@ const Header = () => {
               <Link to="/search" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 {t("nav.companies")}
               </Link>
-              <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
-                Dashboard
-              </Link>
               <Link to="/surveys" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 {t("nav.surveys")}
               </Link>
               <Link to="/compare" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 {t("nav.compare")}
               </Link>
+              <a href="/#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
+                {t("nav.howItWorks")}
+              </a>
               <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 Qiymətlər
               </Link>
