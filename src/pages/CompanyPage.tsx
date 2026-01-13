@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import StarRating from "@/components/StarRating";
 import ReviewCard from "@/components/ReviewCard";
 import ReviewForm from "@/components/ReviewForm";
+import TransparencyIndicators from "@/components/TransparencyIndicators";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +23,8 @@ import {
   Loader2,
   Heart,
   Star,
-  Users
+  Users,
+  BarChart3
 } from "lucide-react";
 
 interface Company {
@@ -40,6 +42,10 @@ interface Company {
   review_count: number | null;
   created_at: string;
   owner_id: string | null;
+  response_rate: number | null;
+  avg_response_time_hours: number | null;
+  verified_reviews_count: number | null;
+  is_sponsored: boolean | null;
 }
 
 interface Review {
@@ -492,6 +498,15 @@ const CompanyPage = () => {
                 )}
               </div>
 
+              {/* Transparency Indicators */}
+              <TransparencyIndicators
+                responseRate={company.response_rate}
+                avgResponseTimeHours={company.avg_response_time_hours}
+                verifiedReviewsCount={company.verified_reviews_count}
+                totalReviewCount={company.review_count}
+                isSponsored={company.is_sponsored || false}
+              />
+
               {/* Company stats */}
               <div className="bg-card rounded-2xl p-6 shadow-card border border-border/50">
                 <h3 className="font-semibold text-lg text-foreground mb-4">Şirkət Məlumatları</h3>
@@ -516,6 +531,18 @@ const CompanyPage = () => {
                       <p className="font-medium text-foreground">{company.review_count || 0}</p>
                     </div>
                   </div>
+
+                  {/* Dashboard link for owners */}
+                  {isCompanyOwner && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-4"
+                      onClick={() => navigate(`/dashboard/${company.id}`)}
+                    >
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      Dashboard-a keç
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
