@@ -18,52 +18,67 @@ export type Database = {
         Row: {
           address: string | null
           average_rating: number | null
+          avg_response_time_hours: number | null
           category: string
           created_at: string
           description: string | null
           email: string | null
           id: string
+          is_sponsored: boolean | null
           logo_url: string | null
           name: string
           owner_id: string | null
           phone: string | null
+          response_rate: number | null
           review_count: number | null
           status: string
+          subscription_plan: string | null
           updated_at: string
+          verified_reviews_count: number | null
           website: string | null
         }
         Insert: {
           address?: string | null
           average_rating?: number | null
+          avg_response_time_hours?: number | null
           category: string
           created_at?: string
           description?: string | null
           email?: string | null
           id?: string
+          is_sponsored?: boolean | null
           logo_url?: string | null
           name: string
           owner_id?: string | null
           phone?: string | null
+          response_rate?: number | null
           review_count?: number | null
           status?: string
+          subscription_plan?: string | null
           updated_at?: string
+          verified_reviews_count?: number | null
           website?: string | null
         }
         Update: {
           address?: string | null
           average_rating?: number | null
+          avg_response_time_hours?: number | null
           category?: string
           created_at?: string
           description?: string | null
           email?: string | null
           id?: string
+          is_sponsored?: boolean | null
           logo_url?: string | null
           name?: string
           owner_id?: string | null
           phone?: string | null
+          response_rate?: number | null
           review_count?: number | null
           status?: string
+          subscription_plan?: string | null
           updated_at?: string
+          verified_reviews_count?: number | null
           website?: string | null
         }
         Relationships: []
@@ -104,6 +119,11 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          is_fin_verified: boolean | null
+          platform_activity_months: number | null
+          survey_participation_count: number | null
+          total_reviews_count: number | null
+          trust_score: number | null
           updated_at: string
           user_id: string
         }
@@ -113,6 +133,11 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_fin_verified?: boolean | null
+          platform_activity_months?: number | null
+          survey_participation_count?: number | null
+          total_reviews_count?: number | null
+          trust_score?: number | null
           updated_at?: string
           user_id: string
         }
@@ -122,6 +147,11 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_fin_verified?: boolean | null
+          platform_activity_months?: number | null
+          survey_participation_count?: number | null
+          total_reviews_count?: number | null
+          trust_score?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -163,9 +193,11 @@ export type Database = {
           company_reply_at: string | null
           content: string
           created_at: string
+          flag_reason: string | null
           helpful_count: number | null
           id: string
           image_url: string | null
+          is_flagged: boolean | null
           price_rating: number | null
           quality_rating: number | null
           rating: number
@@ -173,8 +205,10 @@ export type Database = {
           speed_rating: number | null
           status: string
           title: string
+          trust_score: number | null
           updated_at: string
           user_id: string
+          weighted_rating: number | null
         }
         Insert: {
           company_id: string
@@ -182,9 +216,11 @@ export type Database = {
           company_reply_at?: string | null
           content: string
           created_at?: string
+          flag_reason?: string | null
           helpful_count?: number | null
           id?: string
           image_url?: string | null
+          is_flagged?: boolean | null
           price_rating?: number | null
           quality_rating?: number | null
           rating: number
@@ -192,8 +228,10 @@ export type Database = {
           speed_rating?: number | null
           status?: string
           title: string
+          trust_score?: number | null
           updated_at?: string
           user_id: string
+          weighted_rating?: number | null
         }
         Update: {
           company_id?: string
@@ -201,9 +239,11 @@ export type Database = {
           company_reply_at?: string | null
           content?: string
           created_at?: string
+          flag_reason?: string | null
           helpful_count?: number | null
           id?: string
           image_url?: string | null
+          is_flagged?: boolean | null
           price_rating?: number | null
           quality_rating?: number | null
           rating?: number
@@ -211,12 +251,90 @@ export type Database = {
           speed_rating?: number | null
           status?: string
           title?: string
+          trust_score?: number | null
           updated_at?: string
           user_id?: string
+          weighted_rating?: number | null
         }
         Relationships: [
           {
             foreignKeyName: "reviews_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      survey_responses: {
+        Row: {
+          answers: Json
+          created_at: string | null
+          id: string
+          survey_id: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string | null
+          id?: string
+          survey_id: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          created_at?: string | null
+          id?: string
+          survey_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_responses_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      surveys: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          questions: Json
+          reward_points: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          questions?: Json
+          reward_points?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          questions?: Json
+          reward_points?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "surveys_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
