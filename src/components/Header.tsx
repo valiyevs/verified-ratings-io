@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Shield, Menu, X, LogOut, User, Settings, Building2 } from "lucide-react";
+import { Shield, Menu, X, LogOut, User, Settings, Building2, BarChart3, Plus } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -45,9 +45,6 @@ const Header = () => {
             <Link to="/search" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               {t("nav.companies")}
             </Link>
-            <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              Dashboard
-            </Link>
             <Link to="/surveys" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               {t("nav.surveys")}
             </Link>
@@ -83,8 +80,16 @@ const Header = () => {
                         <User className="w-4 h-4 mr-2" />
                         Profilim
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/add-company')} className="cursor-pointer">
+                      <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer">
+                        <BarChart3 className="w-4 h-4 mr-2" />
+                        Dashboard
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/my-companies')} className="cursor-pointer">
                         <Building2 className="w-4 h-4 mr-2" />
+                        Şirkətlərim
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/add-company')} className="cursor-pointer">
+                        <Plus className="w-4 h-4 mr-2" />
                         Şirkət əlavə et
                       </DropdownMenuItem>
                       {isModerator && (
