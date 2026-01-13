@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, X, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ArrowLeft, Plus, X, TrendingUp, TrendingDown, Minus, Loader2, Building2 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import StarRating from "@/components/StarRating";
@@ -15,100 +15,60 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Company {
   id: string;
   name: string;
-  logo: string;
+  logo_url: string | null;
   category: string;
-  rating: number;
-  reviewCount: number;
-  ratings: {
-    service: number;
-    price: number;
-    speed: number;
-    quality: number;
-  };
+  average_rating: number | null;
+  review_count: number | null;
 }
 
-const allCompanies: Company[] = [
-  {
-    id: "kapital-bank",
-    name: "Kapital Bank",
-    logo: "https://images.unsplash.com/photo-1560472355-536de3962603?w=100&h=100&fit=crop",
-    category: "Bank",
-    rating: 4.5,
-    reviewCount: 1247,
-    ratings: { service: 4.6, price: 4.2, speed: 4.4, quality: 4.7 }
-  },
-  {
-    id: "azercell",
-    name: "Azercell",
-    logo: "https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=100&h=100&fit=crop",
-    category: "Telekommunikasiya",
-    rating: 4.3,
-    reviewCount: 2156,
-    ratings: { service: 4.4, price: 3.9, speed: 4.5, quality: 4.3 }
-  },
-  {
-    id: "pasha-bank",
-    name: "PAŞA Bank",
-    logo: "https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=100&h=100&fit=crop",
-    category: "Bank",
-    rating: 4.7,
-    reviewCount: 892,
-    ratings: { service: 4.8, price: 4.3, speed: 4.6, quality: 4.9 }
-  },
-  {
-    id: "bakcell",
-    name: "Bakcell",
-    logo: "https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=100&h=100&fit=crop",
-    category: "Telekommunikasiya",
-    rating: 4.1,
-    reviewCount: 1834,
-    ratings: { service: 4.2, price: 4.0, speed: 4.3, quality: 4.0 }
-  },
-  {
-    id: "bravo",
-    name: "Bravo",
-    logo: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=100&h=100&fit=crop",
-    category: "Supermarket",
-    rating: 4.4,
-    reviewCount: 3421,
-    ratings: { service: 4.3, price: 4.5, speed: 4.2, quality: 4.5 }
-  },
-  {
-    id: "araz",
-    name: "Araz",
-    logo: "https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=100&h=100&fit=crop",
-    category: "Supermarket",
-    rating: 4.2,
-    reviewCount: 2876,
-    ratings: { service: 4.1, price: 4.6, speed: 4.0, quality: 4.2 }
-  }
-];
-
 const ratingLabels: Record<string, string> = {
-  service: "Xidmət",
-  price: "Qiymət",
-  speed: "Sürət",
-  quality: "Keyfiyyət"
+  overall: "Ümumi Reytinq",
 };
 
 const ComparePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [allCompanies, setAllCompanies] = useState<Company[]>([]);
   const [selectedCompanies, setSelectedCompanies] = useState<Company[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const ids = searchParams.get("companies")?.split(",") || [];
-    const companies = ids
-      .map(id => allCompanies.find(c => c.id === id))
-      .filter(Boolean) as Company[];
-    setSelectedCompanies(companies);
-  }, [searchParams]);
+    fetchCompanies();
+  }, []);
+
+  useEffect(() => {
+    if (allCompanies.length > 0) {
+      const ids = searchParams.get("companies")?.split(",").filter(Boolean) || [];
+      const companies = ids
+        .map(id => allCompanies.find(c => c.id === id))
+        .filter(Boolean) as Company[];
+      setSelectedCompanies(companies);
+    }
+  }, [searchParams, allCompanies]);
+
+  const fetchCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, name, logo_url, category, average_rating, review_count")
+        .eq("status", "approved")
+        .order("name");
+
+      if (error) throw error;
+      setAllCompanies(data || []);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const addCompany = (company: Company) => {
     if (selectedCompanies.length >= 3) return;
@@ -137,12 +97,9 @@ const ComparePage = () => {
       c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getComparisonIndicator = (value: number, index: number, key: string) => {
-    if (selectedCompanies.length < 2) return null;
-    
-    const values = selectedCompanies.map(c => c.ratings[key as keyof typeof c.ratings]);
-    const maxValue = Math.max(...values);
-    const minValue = Math.min(...values);
+  const getComparisonIndicator = (value: number, allValues: number[]) => {
+    const maxValue = Math.max(...allValues);
+    const minValue = Math.min(...allValues);
     
     if (value === maxValue && maxValue !== minValue) {
       return <TrendingUp className="w-4 h-4 text-green-500" />;
@@ -151,6 +108,18 @@ const ComparePage = () => {
     }
     return <Minus className="w-4 h-4 text-muted-foreground" />;
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-24 pb-16 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -167,7 +136,7 @@ const ComparePage = () => {
         </Button>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold font-heading text-foreground mb-2">
+          <h1 className="text-3xl font-bold font-display text-foreground mb-2">
             Şirkət Müqayisəsi
           </h1>
           <p className="text-muted-foreground">
@@ -188,18 +157,27 @@ const ComparePage = () => {
                 <X className="w-4 h-4" />
               </Button>
               <CardContent className="pt-6 text-center">
-                <img
-                  src={company.logo}
-                  alt={company.name}
-                  className="w-20 h-20 rounded-xl mx-auto mb-4 object-cover"
-                />
+                <div className="w-20 h-20 rounded-xl mx-auto mb-4 bg-white border border-border flex items-center justify-center overflow-hidden">
+                  {company.logo_url ? (
+                    <img
+                      src={company.logo_url}
+                      alt={company.name}
+                      className="w-full h-full object-contain p-2"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/placeholder.svg";
+                      }}
+                    />
+                  ) : (
+                    <Building2 className="w-10 h-10 text-muted-foreground" />
+                  )}
+                </div>
                 <h3 className="font-semibold text-lg">{company.name}</h3>
                 <p className="text-sm text-muted-foreground mb-2">{company.category}</p>
                 <div className="flex justify-center">
-                  <StarRating rating={company.rating} size="md" />
+                  <StarRating rating={company.average_rating || 0} size="md" />
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {company.reviewCount} rəy
+                  {company.review_count || 0} rəy
                 </p>
               </CardContent>
             </Card>
@@ -228,24 +206,36 @@ const ComparePage = () => {
                   className="mb-4"
                 />
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {filteredCompanies.map((company) => (
-                    <div
-                      key={company.id}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors"
-                      onClick={() => addCompany(company)}
-                    >
-                      <img
-                        src={company.logo}
-                        alt={company.name}
-                        className="w-10 h-10 rounded-lg object-cover"
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium">{company.name}</p>
-                        <p className="text-sm text-muted-foreground">{company.category}</p>
+                  {filteredCompanies.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-4">
+                      Şirkət tapılmadı
+                    </p>
+                  ) : (
+                    filteredCompanies.map((company) => (
+                      <div
+                        key={company.id}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+                        onClick={() => addCompany(company)}
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-white border border-border flex items-center justify-center overflow-hidden">
+                          {company.logo_url ? (
+                            <img
+                              src={company.logo_url}
+                              alt={company.name}
+                              className="w-full h-full object-contain p-1"
+                            />
+                          ) : (
+                            <Building2 className="w-5 h-5 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium">{company.name}</p>
+                          <p className="text-sm text-muted-foreground">{company.category}</p>
+                        </div>
+                        <StarRating rating={company.average_rating || 0} size="sm" />
                       </div>
-                      <StarRating rating={company.rating} size="sm" />
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </DialogContent>
             </Dialog>
@@ -259,44 +249,70 @@ const ComparePage = () => {
               <h2 className="text-xl font-semibold mb-6">Reytinq Müqayisəsi</h2>
               
               <div className="space-y-6">
-                {Object.keys(ratingLabels).map((key) => (
-                  <div key={key}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium">{ratingLabels[key]}</span>
-                    </div>
-                    <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${selectedCompanies.length}, 1fr)` }}>
-                      {selectedCompanies.map((company, index) => {
-                        const value = company.ratings[key as keyof typeof company.ratings];
-                        return (
-                          <div key={company.id} className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-muted-foreground">{company.name}</span>
-                              <div className="flex items-center gap-1">
-                                <span className="font-semibold">{value.toFixed(1)}</span>
-                                {getComparisonIndicator(value, index, key)}
-                              </div>
-                            </div>
-                            <Progress value={value * 20} className="h-2" />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-
-                {/* Overall Rating */}
-                <div className="pt-4 border-t">
+                {/* Overall Rating Comparison */}
+                <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-lg">Ümumi Reytinq</span>
+                    <span className="font-medium">Ümumi Reytinq</span>
+                  </div>
+                  <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${selectedCompanies.length}, 1fr)` }}>
+                    {selectedCompanies.map((company) => {
+                      const value = company.average_rating || 0;
+                      const allValues = selectedCompanies.map(c => c.average_rating || 0);
+                      return (
+                        <div key={company.id} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">{company.name}</span>
+                            <div className="flex items-center gap-1">
+                              <span className="font-semibold">{value.toFixed(1)}</span>
+                              {getComparisonIndicator(value, allValues)}
+                            </div>
+                          </div>
+                          <Progress value={value * 20} className="h-2" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Review Count Comparison */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium">Rəy Sayı</span>
+                  </div>
+                  <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${selectedCompanies.length}, 1fr)` }}>
+                    {selectedCompanies.map((company) => {
+                      const value = company.review_count || 0;
+                      const allValues = selectedCompanies.map(c => c.review_count || 0);
+                      const maxValue = Math.max(...allValues);
+                      return (
+                        <div key={company.id} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">{company.name}</span>
+                            <div className="flex items-center gap-1">
+                              <span className="font-semibold">{value.toLocaleString()}</span>
+                              {getComparisonIndicator(value, allValues)}
+                            </div>
+                          </div>
+                          <Progress value={maxValue > 0 ? (value / maxValue) * 100 : 0} className="h-2" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="pt-4 border-t">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="font-semibold text-lg">Xülasə</span>
                   </div>
                   <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${selectedCompanies.length}, 1fr)` }}>
                     {selectedCompanies.map((company) => (
                       <div key={company.id} className="text-center p-4 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground mb-1">{company.name}</p>
                         <div className="flex justify-center mb-1">
-                          <StarRating rating={company.rating} size="lg" />
+                          <StarRating rating={company.average_rating || 0} size="lg" />
                         </div>
-                        <p className="text-sm text-muted-foreground">{company.reviewCount} rəy</p>
+                        <p className="text-sm text-muted-foreground">{company.review_count || 0} rəy</p>
                       </div>
                     ))}
                   </div>

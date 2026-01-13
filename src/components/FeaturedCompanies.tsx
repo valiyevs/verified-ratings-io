@@ -1,80 +1,61 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CompanyCard from "./CompanyCard";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 
-const companies = [
-  {
-    id: "kapital-bank",
-    name: "Kapital Bank",
-    category: "Bank",
-    logo: "https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=100&h=100&fit=crop",
-    rating: 4.5,
-    reviewCount: 3245,
-    trend: "up" as const,
-    verified: true,
-    topReview: "Müştəri xidməti çox yaxşılaşıb, mobil tətbiq əla işləyir.",
-  },
-  {
-    id: "azercell",
-    name: "Azercell",
-    category: "Telekommunikasiya",
-    logo: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=100&h=100&fit=crop",
-    rating: 4.2,
-    reviewCount: 5678,
-    trend: "stable" as const,
-    verified: true,
-    topReview: "İnternet sürəti stabil, amma qiymətlər bir az yüksəkdir.",
-  },
-  {
-    id: "bravo",
-    name: "Bravo",
-    category: "Retail",
-    logo: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=100&h=100&fit=crop",
-    rating: 4.0,
-    reviewCount: 2134,
-    trend: "up" as const,
-    verified: true,
-    topReview: "Məhsul çeşidi geniş, işçilər yardımseverdir.",
-  },
-  {
-    id: "pasha-sigorta",
-    name: "PASHA Sığorta",
-    category: "Sığorta",
-    logo: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=100&h=100&fit=crop",
-    rating: 4.3,
-    reviewCount: 1892,
-    trend: "up" as const,
-    verified: true,
-    topReview: "Ödəniş prosesi çox sürətlidir, məsləhətçilər peşəkardır.",
-  },
-  {
-    id: "bolt",
-    name: "Bolt",
-    category: "Nəqliyyat",
-    logo: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=100&h=100&fit=crop",
-    rating: 4.6,
-    reviewCount: 8934,
-    trend: "up" as const,
-    verified: true,
-    topReview: "Qiymətlər münasib, sürücülər nəzakətlidir.",
-  },
-  {
-    id: "wolt",
-    name: "Wolt",
-    category: "E-ticarət",
-    logo: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=100&h=100&fit=crop",
-    rating: 4.4,
-    reviewCount: 6721,
-    trend: "stable" as const,
-    verified: true,
-    topReview: "Çatdırılma sürəti əla, lakin bəzi restoranlar gecikmə edir.",
-  },
-];
+interface Company {
+  id: string;
+  name: string;
+  category: string;
+  logo_url: string | null;
+  average_rating: number | null;
+  review_count: number | null;
+  description: string | null;
+}
 
 const FeaturedCompanies = () => {
   const { t } = useLanguage();
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const fetchCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, name, category, logo_url, average_rating, review_count, description")
+        .eq("status", "approved")
+        .order("average_rating", { ascending: false, nullsFirst: false })
+        .limit(6);
+
+      if (error) throw error;
+      setCompanies(data || []);
+    } catch (error) {
+      console.error("Error fetching featured companies:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <section id="companies" className="py-20 bg-secondary/30">
+        <div className="container mx-auto px-4 flex justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </section>
+    );
+  }
+
+  if (companies.length === 0) {
+    return null;
+  }
 
   return (
     <section id="companies" className="py-20 bg-secondary/30">
@@ -103,7 +84,17 @@ const FeaturedCompanies = () => {
               className="animate-fade-up"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <CompanyCard {...company} />
+              <CompanyCard
+                id={company.id}
+                name={company.name}
+                category={company.category}
+                logo={company.logo_url || "/placeholder.svg"}
+                rating={company.average_rating || 0}
+                reviewCount={company.review_count || 0}
+                trend="stable"
+                verified={true}
+                topReview={company.description || undefined}
+              />
             </div>
           ))}
         </div>
