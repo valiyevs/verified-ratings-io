@@ -24,14 +24,44 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Authentication check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error("Missing or invalid Authorization header");
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Verify the JWT token by getting the user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      console.error("JWT verification failed:", userError);
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    console.log("Authenticated user:", user.id);
 
     const { companyId, reviewTitle, reviewerName, rating }: NotifyRequest = await req.json();
 
+    // Use service role client for data fetching
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+
     // Get company with owner info
-    const { data: company, error: companyError } = await supabase
+    const { data: company, error: companyError } = await serviceClient
       .from("companies")
       .select("name, owner_id, email")
       .eq("id", companyId)
@@ -48,7 +78,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Get owner's email from profile
     let ownerEmail = company.email;
     if (company.owner_id) {
-      const { data: profile } = await supabase
+      const { data: profile } = await serviceClient
         .from("profiles")
         .select("email")
         .eq("user_id", company.owner_id)

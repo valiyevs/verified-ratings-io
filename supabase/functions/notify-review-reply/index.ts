@@ -23,18 +23,49 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Authentication check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error("Missing or invalid Authorization header");
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Verify the JWT token by getting the user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      console.error("JWT verification failed:", userError);
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const userId = user.id;
+    console.log("Authenticated user:", userId);
 
     const { reviewId, companyName, replyContent }: NotifyReplyRequest = await req.json();
 
+    // Use service role client for data fetching
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+
     console.log("Notify review reply for reviewId:", reviewId);
 
-    // Get the review to find the user
-    const { data: review, error: reviewError } = await supabase
+    // Get the review to find the user and verify authorization
+    const { data: review, error: reviewError } = await serviceClient
       .from("reviews")
-      .select("user_id, title")
+      .select("user_id, title, company_id")
       .eq("id", reviewId)
       .single();
 
@@ -46,8 +77,32 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    // Verify caller owns the company that the review is about (or is admin/moderator)
+    const { data: company } = await serviceClient
+      .from("companies")
+      .select("owner_id")
+      .eq("id", review.company_id)
+      .single();
+
+    if (!company || company.owner_id !== userId) {
+      // Check if user is admin or moderator
+      const { data: roles } = await serviceClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      const isPrivileged = roles?.some(r => ['admin', 'moderator'].includes(r.role));
+      if (!isPrivileged) {
+        console.error("User not authorized to send notifications for this company");
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
     // Get user's email and notification preferences from profile
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await serviceClient
       .from("profiles")
       .select("email, full_name, email_notifications_enabled, review_reply_notifications")
       .eq("user_id", review.user_id)

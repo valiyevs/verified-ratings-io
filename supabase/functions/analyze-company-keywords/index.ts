@@ -12,19 +12,75 @@ serve(async (req) => {
   }
 
   try {
-    const { companyId } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    // Authentication check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error("Missing or invalid Authorization header");
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Verify the JWT token by getting the user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      console.error("JWT verification failed:", userError);
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const userId = user.id;
+    console.log("Authenticated user:", userId);
+
+    const { companyId } = await req.json();
+    
+    // Use service role client for data fetching
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Verify user owns the company or is admin/moderator
+    const { data: company } = await serviceClient
+      .from('companies')
+      .select('owner_id')
+      .eq('id', companyId)
+      .single();
+
+    if (!company || company.owner_id !== userId) {
+      // Check if user is admin or moderator
+      const { data: roles } = await serviceClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      const isPrivileged = roles?.some(r => ['admin', 'moderator'].includes(r.role));
+      if (!isPrivileged) {
+        console.error("User not authorized to analyze this company");
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Fetch reviews for the company
-    const { data: reviews, error } = await supabase
+    const { data: reviews, error } = await serviceClient
       .from("reviews")
       .select("content, rating, service_rating, price_rating, speed_rating, quality_rating, created_at")
       .eq("company_id", companyId)
