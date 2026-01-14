@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,7 +30,67 @@ serve(async (req) => {
   }
 
   try {
+    // Authentication check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error("Missing or invalid Authorization header");
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Verify the JWT token by getting the user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      console.error("JWT verification failed:", userError);
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const userId = user.id;
+    console.log("Authenticated user:", userId);
+
     const request: RecommendationRequest = await req.json();
+    
+    // Use service role client for ownership verification
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Verify user owns the company or is admin/moderator
+    const { data: company } = await serviceClient
+      .from('companies')
+      .select('owner_id')
+      .eq('id', request.companyId)
+      .single();
+
+    if (!company || company.owner_id !== userId) {
+      // Check if user is admin or moderator
+      const { data: roles } = await serviceClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      const isPrivileged = roles?.some(r => ['admin', 'moderator'].includes(r.role));
+      if (!isPrivileged) {
+        console.error("User not authorized to get recommendations for this company");
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
