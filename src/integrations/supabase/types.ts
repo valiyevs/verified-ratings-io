@@ -116,6 +116,13 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "company_followers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -199,6 +206,13 @@ export type Database = {
             referencedRelation: "reviews"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "review_helpful_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       reviews: {
@@ -279,6 +293,13 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reviews_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       survey_responses: {
@@ -355,6 +376,13 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "surveys_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -380,7 +408,156 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      companies_public: {
+        Row: {
+          address: string | null
+          average_rating: number | null
+          avg_response_time_hours: number | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          email: string | null
+          id: string | null
+          is_sponsored: boolean | null
+          logo_url: string | null
+          name: string | null
+          phone: string | null
+          response_rate: number | null
+          review_count: number | null
+          status: string | null
+          updated_at: string | null
+          verified_reviews_count: number | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          average_rating?: number | null
+          avg_response_time_hours?: number | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: never
+          id?: string | null
+          is_sponsored?: boolean | null
+          logo_url?: string | null
+          name?: string | null
+          phone?: never
+          response_rate?: number | null
+          review_count?: number | null
+          status?: string | null
+          updated_at?: string | null
+          verified_reviews_count?: number | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          average_rating?: number | null
+          avg_response_time_hours?: number | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: never
+          id?: string | null
+          is_sponsored?: boolean | null
+          logo_url?: string | null
+          name?: string | null
+          phone?: never
+          response_rate?: number | null
+          review_count?: number | null
+          status?: string | null
+          updated_at?: string | null
+          verified_reviews_count?: number | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      reviews_public: {
+        Row: {
+          company_id: string | null
+          company_reply: string | null
+          company_reply_at: string | null
+          content: string | null
+          created_at: string | null
+          flag_reason: string | null
+          helpful_count: number | null
+          id: string | null
+          image_url: string | null
+          is_flagged: boolean | null
+          price_rating: number | null
+          quality_rating: number | null
+          rating: number | null
+          service_rating: number | null
+          speed_rating: number | null
+          status: string | null
+          title: string | null
+          trust_score: number | null
+          updated_at: string | null
+          user_id: string | null
+          weighted_rating: number | null
+        }
+        Insert: {
+          company_id?: string | null
+          company_reply?: string | null
+          company_reply_at?: string | null
+          content?: string | null
+          created_at?: string | null
+          flag_reason?: string | null
+          helpful_count?: number | null
+          id?: string | null
+          image_url?: string | null
+          is_flagged?: boolean | null
+          price_rating?: number | null
+          quality_rating?: number | null
+          rating?: number | null
+          service_rating?: number | null
+          speed_rating?: number | null
+          status?: string | null
+          title?: string | null
+          trust_score?: number | null
+          updated_at?: string | null
+          user_id?: never
+          weighted_rating?: number | null
+        }
+        Update: {
+          company_id?: string | null
+          company_reply?: string | null
+          company_reply_at?: string | null
+          content?: string | null
+          created_at?: string | null
+          flag_reason?: string | null
+          helpful_count?: number | null
+          id?: string | null
+          image_url?: string | null
+          is_flagged?: boolean | null
+          price_rating?: number | null
+          quality_rating?: number | null
+          rating?: number | null
+          service_rating?: number | null
+          speed_rating?: number | null
+          status?: string | null
+          title?: string | null
+          trust_score?: number | null
+          updated_at?: string | null
+          user_id?: never
+          weighted_rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {
