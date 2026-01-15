@@ -11,6 +11,7 @@ import SearchPage from "./pages/SearchPage";
 import SurveysPage from "./pages/SurveysPage";
 import SurveyDetailPage from "./pages/SurveyDetailPage";
 import CreateSurveyPage from "./pages/CreateSurveyPage";
+import SurveyResultsPage from "./pages/SurveyResultsPage";
 import ComparePage from "./pages/ComparePage";
 import AuthPage from "./pages/AuthPage";
 import AdminPage from "./pages/AdminPage";
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/surveys" element={<SurveysPage />} />
               <Route path="/surveys/create" element={<CreateSurveyPage />} />
               <Route path="/surveys/:surveyId" element={<SurveyDetailPage />} />
+              <Route path="/surveys/:surveyId/results" element={<SurveyResultsPage />} />
               <Route path="/compare" element={<ComparePage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/admin" element={<AdminPage />} />

@@ -6,8 +6,11 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { 
@@ -21,7 +24,11 @@ import {
   Shield,
   Zap,
   Building2,
-  Loader2
+  Loader2,
+  CreditCard,
+  Lock,
+  CheckCircle2,
+  ArrowRight
 } from 'lucide-react';
 
 interface PlanFeature {
@@ -33,6 +40,7 @@ interface Plan {
   id: string;
   name: string;
   price: string;
+  priceValue: number;
   period: string;
   description: string;
   features: PlanFeature[];
@@ -46,6 +54,8 @@ interface UserCompany {
   subscription_plan: string | null;
 }
 
+type PaymentStep = 'select' | 'details' | 'processing' | 'success';
+
 const PricingPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -54,6 +64,14 @@ const PricingPage = () => {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Payment flow states
+  const [paymentStep, setPaymentStep] = useState<PaymentStep>('select');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [processingProgress, setProcessingProgress] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -83,6 +101,7 @@ const PricingPage = () => {
       id: 'free',
       name: 'Free',
       price: '₼0',
+      priceValue: 0,
       period: '/ay',
       description: 'Kiçik bizneslər üçün başlanğıc',
       icon: <Building2 className="h-6 w-6" />,
@@ -102,6 +121,7 @@ const PricingPage = () => {
       id: 'pro',
       name: 'Pro',
       price: '₼49',
+      priceValue: 49,
       period: '/ay',
       description: 'Böyüyən bizneslər üçün',
       icon: <Star className="h-6 w-6" />,
@@ -122,6 +142,7 @@ const PricingPage = () => {
       id: 'enterprise',
       name: 'Enterprise',
       price: '₼149',
+      priceValue: 149,
       period: '/ay',
       description: 'Böyük şirkətlər və korporasiyalar üçün',
       icon: <Shield className="h-6 w-6" />,
@@ -153,14 +174,79 @@ const PricingPage = () => {
     }
 
     setSelectedPlan(planId);
+    setPaymentStep(planId === 'free' ? 'select' : 'details');
     setConfirmDialogOpen(true);
+    // Reset payment form
+    setCardNumber('');
+    setCardName('');
+    setCardExpiry('');
+    setCardCvv('');
+    setProcessingProgress(0);
   };
 
-  const handleConfirmPlan = async () => {
-    if (!selectedCompanyId || !selectedPlan) return;
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    if (parts.length) {
+      return parts.join(' ');
+    } else {
+      return value;
+    }
+  };
+
+  const formatExpiry = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    if (v.length >= 2) {
+      return v.substring(0, 2) + '/' + v.substring(2, 4);
+    }
+    return v;
+  };
+
+  const handlePayment = async () => {
+    if (selectedPlan !== 'free') {
+      // Validate card details
+      if (cardNumber.replace(/\s/g, '').length < 16) {
+        toast({ title: 'Kart nömrəsi səhvdir', variant: 'destructive' });
+        return;
+      }
+      if (!cardName.trim()) {
+        toast({ title: 'Kart sahibinin adını daxil edin', variant: 'destructive' });
+        return;
+      }
+      if (cardExpiry.length < 5) {
+        toast({ title: 'Bitmə tarixini daxil edin', variant: 'destructive' });
+        return;
+      }
+      if (cardCvv.length < 3) {
+        toast({ title: 'CVV daxil edin', variant: 'destructive' });
+        return;
+      }
+    }
+
+    // Start processing animation
+    setPaymentStep('processing');
+    setProcessingProgress(0);
     
-    setLoading(true);
-    
+    // Simulate payment processing
+    const interval = setInterval(() => {
+      setProcessingProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 200);
+
+    // Wait for animation
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
+    // Actually update the plan
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + 1);
 
@@ -173,13 +259,29 @@ const PricingPage = () => {
       .eq('id', selectedCompanyId);
 
     if (error) {
+      setPaymentStep('details');
+      toast({ title: 'Ödəniş xətası', description: 'Zəhmət olmasa yenidən cəhd edin', variant: 'destructive' });
+    } else {
+      setPaymentStep('success');
+      fetchUserCompanies();
+    }
+  };
+
+  const handleConfirmFreePlan = async () => {
+    setLoading(true);
+    
+    const { error } = await supabase
+      .from('companies')
+      .update({ 
+        subscription_plan: 'free',
+        subscription_expires_at: null
+      })
+      .eq('id', selectedCompanyId);
+
+    if (error) {
       toast({ title: 'Xəta baş verdi', variant: 'destructive' });
     } else {
-      const planNames: Record<string, string> = { free: 'Free', pro: 'Pro', enterprise: 'Enterprise' };
-      toast({ 
-        title: `${planNames[selectedPlan]} planı aktivləşdirildi!`, 
-        description: selectedPlan !== 'free' ? 'Ödəniş sistemi tezliklə əlavə olunacaq.' : undefined
-      });
+      toast({ title: 'Free planı aktivləşdirildi!' });
       setConfirmDialogOpen(false);
       fetchUserCompanies();
     }
@@ -187,10 +289,18 @@ const PricingPage = () => {
     setLoading(false);
   };
 
+  const handleDialogClose = () => {
+    setConfirmDialogOpen(false);
+    setPaymentStep('select');
+    setSelectedPlan(null);
+  };
+
   const getCompanyCurrentPlan = () => {
     const company = userCompanies.find(c => c.id === selectedCompanyId);
     return company?.subscription_plan || 'free';
   };
+
+  const selectedPlanData = plans.find(p => p.id === selectedPlan);
 
   return (
     <div className="min-h-screen bg-background">
@@ -371,43 +481,207 @@ const PricingPage = () => {
         </div>
       </main>
 
-      {/* Confirm Dialog */}
-      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Plan Dəyişikliyi</DialogTitle>
-            <DialogDescription>
-              {selectedPlan && `${plans.find(p => p.id === selectedPlan)?.name} planını seçmək istədiyinizə əminsiniz?`}
-            </DialogDescription>
-          </DialogHeader>
+      {/* Payment Dialog */}
+      <Dialog open={confirmDialogOpen} onOpenChange={handleDialogClose}>
+        <DialogContent className="sm:max-w-md">
+          {/* Free Plan Confirmation */}
+          {selectedPlan === 'free' && paymentStep === 'select' && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Free Planı Seçin</DialogTitle>
+                <DialogDescription>
+                  Free planına keçmək istədiyinizə əminsiniz?
+                </DialogDescription>
+              </DialogHeader>
 
-          {userCompanies.length > 1 && (
-            <div className="py-4">
-              <label className="text-sm font-medium mb-2 block">Şirkət seçin:</label>
-              <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Şirkət seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {userCompanies.map(company => (
-                    <SelectItem key={company.id} value={company.id}>
-                      {company.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {userCompanies.length > 1 && (
+                <div className="py-4">
+                  <Label className="mb-2 block">Şirkət seçin:</Label>
+                  <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Şirkət seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {userCompanies.map(company => (
+                        <SelectItem key={company.id} value={company.id}>
+                          {company.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button variant="outline" onClick={handleDialogClose}>
+                  Ləğv et
+                </Button>
+                <Button onClick={handleConfirmFreePlan} disabled={loading || !selectedCompanyId}>
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Təsdiq et
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {/* Payment Details Step */}
+          {selectedPlan !== 'free' && paymentStep === 'details' && selectedPlanData && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  Ödəniş Məlumatları
+                </DialogTitle>
+                <DialogDescription>
+                  {selectedPlanData.name} planı - {selectedPlanData.price}/ay
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 py-4">
+                {/* Company selector for multiple companies */}
+                {userCompanies.length > 1 && (
+                  <div>
+                    <Label className="mb-2 block">Şirkət</Label>
+                    <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Şirkət seçin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {userCompanies.map(company => (
+                          <SelectItem key={company.id} value={company.id}>
+                            {company.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Card Number */}
+                <div>
+                  <Label htmlFor="cardNumber">Kart nömrəsi</Label>
+                  <div className="relative">
+                    <Input
+                      id="cardNumber"
+                      placeholder="1234 5678 9012 3456"
+                      value={cardNumber}
+                      onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                      maxLength={19}
+                      className="pl-10"
+                    />
+                    <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+
+                {/* Card Name */}
+                <div>
+                  <Label htmlFor="cardName">Kart sahibinin adı</Label>
+                  <Input
+                    id="cardName"
+                    placeholder="AD SOYAD"
+                    value={cardName}
+                    onChange={(e) => setCardName(e.target.value.toUpperCase())}
+                  />
+                </div>
+
+                {/* Expiry & CVV */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="cardExpiry">Bitmə tarixi</Label>
+                    <Input
+                      id="cardExpiry"
+                      placeholder="MM/YY"
+                      value={cardExpiry}
+                      onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
+                      maxLength={5}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cardCvv">CVV</Label>
+                    <div className="relative">
+                      <Input
+                        id="cardCvv"
+                        placeholder="123"
+                        value={cardCvv}
+                        onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        maxLength={4}
+                        type="password"
+                      />
+                      <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Security notice */}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted p-3 rounded-lg">
+                  <Shield className="h-4 w-4 text-green-500" />
+                  <span>Ödəniş məlumatlarınız 256-bit SSL ilə şifrələnir</span>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={handleDialogClose}>
+                  Ləğv et
+                </Button>
+                <Button onClick={handlePayment} disabled={!selectedCompanyId}>
+                  <Lock className="h-4 w-4 mr-2" />
+                  {selectedPlanData.price} Ödə
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {/* Processing Step */}
+          {paymentStep === 'processing' && (
+            <div className="py-8 text-center">
+              <div className="relative w-20 h-20 mx-auto mb-6">
+                <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
+                <div 
+                  className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" 
+                />
+                <CreditCard className="absolute inset-0 m-auto h-8 w-8 text-primary" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Ödəniş emal edilir...</h3>
+              <p className="text-muted-foreground text-sm mb-4">Zəhmət olmasa gözləyin</p>
+              <Progress value={processingProgress} className="w-full" />
+              <p className="text-xs text-muted-foreground mt-2">{processingProgress}%</p>
             </div>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
-              Ləğv et
-            </Button>
-            <Button onClick={handleConfirmPlan} disabled={loading || !selectedCompanyId}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Təsdiq et
-            </Button>
-          </DialogFooter>
+          {/* Success Step */}
+          {paymentStep === 'success' && selectedPlanData && (
+            <div className="py-8 text-center">
+              <div className="w-20 h-20 mx-auto mb-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="h-10 w-10 text-green-500" />
+              </div>
+              <h3 className="font-semibold text-xl mb-2">Ödəniş Uğurlu!</h3>
+              <p className="text-muted-foreground mb-6">
+                {selectedPlanData.name} planı aktivləşdirildi
+              </p>
+              
+              <div className="bg-muted p-4 rounded-lg mb-6 text-left">
+                <div className="flex justify-between mb-2">
+                  <span className="text-muted-foreground">Plan:</span>
+                  <span className="font-medium">{selectedPlanData.name}</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-muted-foreground">Məbləğ:</span>
+                  <span className="font-medium">{selectedPlanData.price}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Növbəti ödəniş:</span>
+                  <span className="font-medium">
+                    {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('az-AZ')}
+                  </span>
+                </div>
+              </div>
+
+              <Button onClick={() => navigate(`/business-dashboard/${selectedCompanyId}`)} className="w-full">
+                Dashboard-a Keç
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
