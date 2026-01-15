@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { getPlanPermissions, getPlanName, getPlanBadgeVariant, type SubscriptionPlan } from '@/lib/subscriptionPermissions';
 import { 
   BarChart3, 
   Star, 
@@ -33,7 +34,11 @@ import {
   Phone,
   Mail,
   Globe,
-  MapPin
+  MapPin,
+  Lock,
+  Crown,
+  ClipboardList,
+  Zap
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
@@ -368,11 +373,73 @@ const BusinessDashboard = () => {
               <Pencil className="h-4 w-4 mr-2" />
               Redaktə et
             </Button>
-            <Badge variant={company.subscription_plan === 'free' ? 'secondary' : 'default'}>
-              {company.subscription_plan?.toUpperCase() || 'FREE'} Plan
-            </Badge>
+            <Link to="/pricing">
+              <Badge 
+                variant={getPlanBadgeVariant(company.subscription_plan)} 
+                className="cursor-pointer hover:opacity-80 flex items-center gap-1"
+              >
+                {company.subscription_plan === 'enterprise' && <Crown className="h-3 w-3" />}
+                {company.subscription_plan === 'pro' && <Zap className="h-3 w-3" />}
+                {getPlanName(company.subscription_plan)}
+              </Badge>
+            </Link>
           </div>
         </div>
+
+        {/* Plan Permissions Banner */}
+        {(() => {
+          const permissions = getPlanPermissions(company.subscription_plan);
+          const planName = getPlanName(company.subscription_plan);
+          return (
+            <Card className="mb-8 border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+              <CardContent className="p-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    {company.subscription_plan === 'enterprise' ? (
+                      <Crown className="h-6 w-6 text-primary" />
+                    ) : company.subscription_plan === 'pro' ? (
+                      <Zap className="h-6 w-6 text-primary" />
+                    ) : (
+                      <Building2 className="h-6 w-6 text-muted-foreground" />
+                    )}
+                    <div>
+                      <h3 className="font-semibold">{planName} Planı</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {permissions.canViewAnalytics ? 'Analitikaya tam giriş' : 'Məhdud funksionallıq'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-sm">
+                    <div className={`flex items-center gap-1 ${permissions.canViewAnalytics ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      {permissions.canViewAnalytics ? <CheckCircle2 className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                      Analitika
+                    </div>
+                    <div className={`flex items-center gap-1 ${permissions.canReplyToReviews ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      {permissions.canReplyToReviews ? <CheckCircle2 className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                      Rəy Cavabları
+                    </div>
+                    <div className={`flex items-center gap-1 ${permissions.canCreateSurveys ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      {permissions.canCreateSurveys ? <CheckCircle2 className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                      Sorğular ({permissions.surveysPerMonth}/ay)
+                    </div>
+                    <div className={`flex items-center gap-1 ${permissions.canUseAIAnalysis ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      {permissions.canUseAIAnalysis ? <CheckCircle2 className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                      AI Analiz
+                    </div>
+                  </div>
+                  {company.subscription_plan === 'free' && (
+                    <Link to="/pricing">
+                      <Button size="sm" variant="default">
+                        <Crown className="h-4 w-4 mr-1" />
+                        Planı Yüksəlt
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -425,20 +492,34 @@ const BusinessDashboard = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Ümumi Baxış</TabsTrigger>
-            <TabsTrigger value="reviews">
-              <MessageSquare className="h-4 w-4 mr-1" />
-              Rəylər ({reviews.length})
-            </TabsTrigger>
-            <TabsTrigger value="criteria">Meyarlar</TabsTrigger>
-            <TabsTrigger value="company-info">
-              <Building2 className="h-4 w-4 mr-1" />
-              Şirkət Məlumatları
-            </TabsTrigger>
-            <TabsTrigger value="ai-analysis">AI Analiz</TabsTrigger>
-          </TabsList>
+        {(() => {
+          const permissions = getPlanPermissions(company.subscription_plan);
+          return (
+            <Tabs defaultValue="overview" className="space-y-4">
+              <TabsList className="flex-wrap">
+                <TabsTrigger value="overview">Ümumi Baxış</TabsTrigger>
+                <TabsTrigger value="reviews">
+                  <MessageSquare className="h-4 w-4 mr-1" />
+                  Rəylər ({reviews.length})
+                </TabsTrigger>
+                <TabsTrigger value="criteria" disabled={!permissions.canViewAnalytics}>
+                  {!permissions.canViewAnalytics && <Lock className="h-3 w-3 mr-1" />}
+                  Meyarlar
+                </TabsTrigger>
+                <TabsTrigger value="company-info">
+                  <Building2 className="h-4 w-4 mr-1" />
+                  Şirkət Məlumatları
+                </TabsTrigger>
+                <TabsTrigger value="surveys" disabled={!permissions.canCreateSurveys}>
+                  {!permissions.canCreateSurveys && <Lock className="h-3 w-3 mr-1" />}
+                  <ClipboardList className="h-4 w-4 mr-1" />
+                  Sorğular
+                </TabsTrigger>
+                <TabsTrigger value="ai-analysis" disabled={!permissions.canUseAIAnalysis}>
+                  {!permissions.canUseAIAnalysis && <Lock className="h-3 w-3 mr-1" />}
+                  AI Analiz
+                </TabsTrigger>
+              </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
             <div className="grid lg:grid-cols-2 gap-6">
@@ -503,7 +584,9 @@ const BusinessDashboard = () => {
                   Müştəri Rəyləri
                 </CardTitle>
                 <CardDescription>
-                  Müştərilərin rəylərinə birbaşa cavab verin
+                  {permissions.canReplyToReviews 
+                    ? 'Müştərilərin rəylərinə birbaşa cavab verin'
+                    : 'Rəylərə cavab vermək üçün Pro planına keçin'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -529,7 +612,7 @@ const BusinessDashboard = () => {
                               {review.reviewer_name} • {new Date(review.created_at).toLocaleDateString('az-AZ')}
                             </p>
                           </div>
-                          {!review.company_reply && (
+                          {!review.company_reply && permissions.canReplyToReviews && (
                             <Button 
                               size="sm" 
                               onClick={() => {
@@ -540,6 +623,14 @@ const BusinessDashboard = () => {
                               <Send className="h-4 w-4 mr-1" />
                               Cavab ver
                             </Button>
+                          )}
+                          {!review.company_reply && !permissions.canReplyToReviews && (
+                            <Link to="/pricing">
+                              <Button size="sm" variant="outline">
+                                <Lock className="h-4 w-4 mr-1" />
+                                Pro ilə Cavab ver
+                              </Button>
+                            </Link>
                           )}
                         </div>
                         <p className="text-sm mb-3">{review.content}</p>
@@ -555,6 +646,51 @@ const BusinessDashboard = () => {
                         )}
                       </div>
                     ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Surveys Tab */}
+          <TabsContent value="surveys" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ClipboardList className="h-5 w-5 text-primary" />
+                  Müştəri Sorğuları
+                </CardTitle>
+                <CardDescription>
+                  {permissions.canCreateSurveys 
+                    ? `Ayda ${permissions.surveysPerMonth} sorğu yarada bilərsiniz`
+                    : 'Sorğu yaratmaq üçün Pro planına keçin'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {permissions.canCreateSurveys ? (
+                  <div className="space-y-4">
+                    <Link to="/surveys/create">
+                      <Button>
+                        <ClipboardList className="h-4 w-4 mr-2" />
+                        Yeni Sorğu Yarat
+                      </Button>
+                    </Link>
+                    <p className="text-sm text-muted-foreground">
+                      Bu ay {company.subscription_plan === 'enterprise' ? 'limitsiz' : `${permissions.surveysPerMonth}`} sorğu yarada bilərsiniz.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="py-8 text-center">
+                    <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground mb-4">
+                      Müştəri sorğuları yaratmaq üçün Pro və ya Enterprise planına keçin
+                    </p>
+                    <Link to="/pricing">
+                      <Button>
+                        <Crown className="h-4 w-4 mr-2" />
+                        Planı Yüksəlt
+                      </Button>
+                    </Link>
                   </div>
                 )}
               </CardContent>
@@ -682,11 +818,26 @@ const BusinessDashboard = () => {
                   AI Açar Söz Analizi
                 </CardTitle>
                 <CardDescription>
-                  Süni intellekt rəylərinizi analiz edərək güclü və zəif tərəflərinizi müəyyən edir
+                  {permissions.canUseAIAnalysis 
+                    ? 'Süni intellekt rəylərinizi analiz edərək güclü və zəif tərəflərinizi müəyyən edir'
+                    : 'AI analizi Enterprise planında mövcuddur'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {!aiAnalysis ? (
+                {!permissions.canUseAIAnalysis ? (
+                  <div className="py-8 text-center">
+                    <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground mb-4">
+                      AI analizi yalnız Enterprise planında mövcuddur
+                    </p>
+                    <Link to="/pricing">
+                      <Button>
+                        <Crown className="h-4 w-4 mr-2" />
+                        Enterprise-a Keç
+                      </Button>
+                    </Link>
+                  </div>
+                ) : !aiAnalysis ? (
                   <div className="py-8 text-center">
                     <Button onClick={analyzeKeywords} disabled={analyzingKeywords}>
                       {analyzingKeywords ? (
@@ -788,6 +939,8 @@ const BusinessDashboard = () => {
             </Card>
           </TabsContent>
         </Tabs>
+          );
+        })()}
       </main>
 
       {/* Reply Dialog */}

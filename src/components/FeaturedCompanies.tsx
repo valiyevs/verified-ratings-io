@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CompanyCard from "./CompanyCard";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Loader2, Crown, Zap, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,6 +15,7 @@ interface Company {
   average_rating: number | null;
   review_count: number | null;
   description: string | null;
+  subscription_plan: string | null;
 }
 
 const FeaturedCompanies = () => {
@@ -29,7 +31,7 @@ const FeaturedCompanies = () => {
     try {
       const { data, error } = await supabase
         .from("companies")
-        .select("id, name, category, logo_url, average_rating, review_count, description")
+        .select("id, name, category, logo_url, average_rating, review_count, description, subscription_plan")
         .eq("status", "approved")
         .order("average_rating", { ascending: false, nullsFirst: false })
         .limit(6);
@@ -43,9 +45,29 @@ const FeaturedCompanies = () => {
     }
   };
 
+  const getPlanBadge = (plan: string | null) => {
+    if (plan === 'enterprise') {
+      return (
+        <Badge className="absolute top-3 right-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-lg z-10">
+          <Crown className="w-3 h-3 mr-1" />
+          Enterprise
+        </Badge>
+      );
+    }
+    if (plan === 'pro') {
+      return (
+        <Badge className="absolute top-3 right-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0 shadow-lg z-10">
+          <Zap className="w-3 h-3 mr-1" />
+          Pro
+        </Badge>
+      );
+    }
+    return null;
+  };
+
   if (loading) {
     return (
-      <section id="companies" className="py-20 bg-secondary/30">
+      <section id="companies" className="py-20 bg-gradient-to-b from-secondary/30 to-transparent">
         <div className="container mx-auto px-4 flex justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
@@ -58,10 +80,18 @@ const FeaturedCompanies = () => {
   }
 
   return (
-    <section id="companies" className="py-20 bg-secondary/30">
-      <div className="container mx-auto px-4">
+    <section id="companies" className="py-20 bg-gradient-to-b from-secondary/30 to-transparent relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+      
+      <div className="container mx-auto px-4 relative">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
           <div>
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium mb-4">
+              <Sparkles className="w-4 h-4" />
+              Ən yaxşı şirkətlər
+            </div>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
               {t("featured.title")}
             </h2>
@@ -70,9 +100,9 @@ const FeaturedCompanies = () => {
             </p>
           </div>
           <Link to="/search">
-            <Button variant="outline" className="self-start md:self-auto">
+            <Button variant="outline" className="self-start md:self-auto group">
               {t("featured.viewAll")}
-              <ArrowRight className="w-4 h-4 ml-1" />
+              <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
         </div>
@@ -81,9 +111,10 @@ const FeaturedCompanies = () => {
           {companies.map((company, index) => (
             <div
               key={company.id}
-              className="animate-fade-up"
+              className="animate-fade-up relative"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
+              {getPlanBadge(company.subscription_plan)}
               <CompanyCard
                 id={company.id}
                 name={company.name}

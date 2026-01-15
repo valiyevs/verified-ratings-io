@@ -25,7 +25,9 @@ import {
   Heart,
   Star,
   Users,
-  BarChart3
+  BarChart3,
+  Crown,
+  Zap
 } from "lucide-react";
 
 interface Company {
@@ -47,6 +49,7 @@ interface Company {
   avg_response_time_hours: number | null;
   verified_reviews_count: number | null;
   is_sponsored: boolean | null;
+  subscription_plan: string | null;
 }
 
 interface Review {
@@ -430,6 +433,19 @@ const CompanyPage = () => {
                   </h1>
                   {company.status === 'approved' && (
                     <CheckCircle className="w-6 h-6 text-primary" />
+                  )}
+                  {/* Premium Badges */}
+                  {company.subscription_plan === 'enterprise' && (
+                    <Badge variant="default" className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                      <Crown className="w-3 h-3 mr-1" />
+                      Enterprise
+                    </Badge>
+                  )}
+                  {company.subscription_plan === 'pro' && (
+                    <Badge variant="default" className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0">
+                      <Zap className="w-3 h-3 mr-1" />
+                      Pro
+                    </Badge>
                   )}
                 </div>
                 
