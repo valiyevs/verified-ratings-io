@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { CompetitorAnalysis } from '@/components/CompetitorAnalysis';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -519,6 +520,10 @@ const BusinessDashboard = () => {
                   {!permissions.canUseAIAnalysis && <Lock className="h-3 w-3 mr-1" />}
                   AI Analiz
                 </TabsTrigger>
+                <TabsTrigger value="competitors" disabled={!permissions.canViewDetailedAnalytics}>
+                  {!permissions.canViewDetailedAnalytics && <Lock className="h-3 w-3 mr-1" />}
+                  Rəqib Analizi
+                </TabsTrigger>
               </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -937,6 +942,28 @@ const BusinessDashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Competitor Analysis Tab */}
+          <TabsContent value="competitors">
+            {permissions.canViewDetailedAnalytics ? (
+              <CompetitorAnalysis 
+                companyId={companyId!}
+                category={company.category}
+                currentRating={company.average_rating}
+                currentReviewCount={company.review_count}
+              />
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Lock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Bu funksiya Pro+ planlar üçün mövcuddur</h3>
+                  <Link to="/pricing">
+                    <Button>Planı Yüksəlt</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
           );
