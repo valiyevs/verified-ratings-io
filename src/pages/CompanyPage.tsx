@@ -6,6 +6,7 @@ import StarRating from "@/components/StarRating";
 import ReviewCard from "@/components/ReviewCard";
 import ReviewForm from "@/components/ReviewForm";
 import TransparencyIndicators from "@/components/TransparencyIndicators";
+import RatingChart from "@/components/RatingChart";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -565,6 +566,14 @@ const CompanyPage = () => {
                   </div>
                 )}
               </div>
+
+              {/* Rating Chart */}
+              {reviews.length > 0 && (
+                <RatingChart 
+                  reviews={reviews} 
+                  averageRating={company.average_rating || 0} 
+                />
+              )}
 
               {/* Transparency Indicators */}
               <TransparencyIndicators
