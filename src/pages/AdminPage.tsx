@@ -16,7 +16,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Shield, Building2, MessageSquare, Users, Check, X, Loader2, Eye, Image, Star, ExternalLink, AlertTriangle, Flag } from 'lucide-react';
+import { Shield, Building2, MessageSquare, Users, Check, X, Loader2, Eye, Image, Star, ExternalLink, AlertTriangle, Flag, CreditCard, Crown, Sparkles } from 'lucide-react';
+import { getPlanName, getPlanBadgeVariant, type SubscriptionPlan } from '@/lib/subscriptionPermissions';
 
 interface Company {
   id: string;
@@ -34,6 +35,8 @@ interface Company {
   review_count: number | null;
   owner_name?: string;
   owner_email?: string;
+  subscription_plan: string | null;
+  subscription_expires_at: string | null;
 }
 
 interface Review {
@@ -369,13 +372,17 @@ const AdminPage = () => {
         </div>
 
         <Tabs defaultValue="companies" className="space-y-4">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="companies">Şirkətlər</TabsTrigger>
             <TabsTrigger value="reviews">Rəylər</TabsTrigger>
             <TabsTrigger value="flagged" className="flex items-center gap-2">
               <Flag className="h-4 w-4" />
               Şübhəli ({reviews.filter(r => r.is_flagged).length})
             </TabsTrigger>
+            {isAdmin && <TabsTrigger value="subscriptions" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Paketlər
+            </TabsTrigger>}
             {isAdmin && <TabsTrigger value="users">İstifadəçilər</TabsTrigger>}
           </TabsList>
 
@@ -627,6 +634,177 @@ const AdminPage = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Subscriptions Tab */}
+          {isAdmin && (
+            <TabsContent value="subscriptions">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Crown className="h-5 w-5 text-yellow-500" />
+                    Şirkət Paketləri İdarəetməsi
+                  </CardTitle>
+                  <CardDescription>
+                    Şirkətlərə abunəlik planları təyin edin. Hər plan fərqli səlahiyyətlər verir.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="flex justify-center p-8">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                  ) : companies.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">Heç bir şirkət yoxdur</p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Şirkət</TableHead>
+                          <TableHead>Kateqoriya</TableHead>
+                          <TableHead>Hazırkı Plan</TableHead>
+                          <TableHead>Bitmə tarixi</TableHead>
+                          <TableHead>Plan dəyişdir</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {companies.filter(c => c.status === 'approved').map((company) => (
+                          <TableRow key={company.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                  <span className="text-sm font-bold text-primary">{company.name.charAt(0)}</span>
+                                </div>
+                                <div>
+                                  <p className="font-medium">{company.name}</p>
+                                  {company.owner_name && (
+                                    <p className="text-xs text-muted-foreground">{company.owner_name}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{company.category}</TableCell>
+                            <TableCell>
+                              <Badge variant={getPlanBadgeVariant(company.subscription_plan)} className="flex items-center gap-1 w-fit">
+                                {company.subscription_plan === 'enterprise' && <Crown className="h-3 w-3" />}
+                                {company.subscription_plan === 'pro' && <Sparkles className="h-3 w-3" />}
+                                {getPlanName(company.subscription_plan)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {company.subscription_expires_at ? (
+                                <span className={new Date(company.subscription_expires_at) < new Date() ? 'text-destructive' : ''}>
+                                  {new Date(company.subscription_expires_at).toLocaleDateString('az-AZ')}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={company.subscription_plan || 'free'}
+                                onValueChange={async (newPlan) => {
+                                  const expiresAt = new Date();
+                                  expiresAt.setMonth(expiresAt.getMonth() + 1);
+                                  
+                                  const { error } = await supabase
+                                    .from('companies')
+                                    .update({ 
+                                      subscription_plan: newPlan,
+                                      subscription_expires_at: newPlan !== 'free' ? expiresAt.toISOString() : null
+                                    })
+                                    .eq('id', company.id);
+                                  
+                                  if (error) {
+                                    toast({ title: 'Xəta baş verdi', variant: 'destructive' });
+                                  } else {
+                                    toast({ title: `${company.name} üçün ${getPlanName(newPlan)} planı aktivləşdirildi` });
+                                    fetchData();
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="w-[140px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="free">
+                                    <div className="flex items-center gap-2">
+                                      <Building2 className="h-4 w-4" />
+                                      Free
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="pro">
+                                    <div className="flex items-center gap-2">
+                                      <Sparkles className="h-4 w-4 text-blue-500" />
+                                      Pro
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="enterprise">
+                                    <div className="flex items-center gap-2">
+                                      <Crown className="h-4 w-4 text-yellow-500" />
+                                      Enterprise
+                                    </div>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                  
+                  {/* Plan Permissions Info */}
+                  <div className="mt-8 grid md:grid-cols-3 gap-4">
+                    <Card className="border-border/50">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Building2 className="h-4 w-4" />
+                          Free Plan
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="text-xs text-muted-foreground space-y-1">
+                        <p>✓ Əsas profil</p>
+                        <p>✓ Rəylərə cavab vermək</p>
+                        <p>✓ 10 rəy limiti/ay</p>
+                        <p>✗ AI analiz</p>
+                        <p>✗ Sorğu yaratmaq</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="border-blue-500/30 bg-blue-500/5">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-blue-500" />
+                          Pro Plan
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="text-xs text-muted-foreground space-y-1">
+                        <p>✓ Free-dəki hər şey</p>
+                        <p>✓ Limitsiz rəy</p>
+                        <p>✓ Detallı analitika</p>
+                        <p>✓ AI açar söz analizi</p>
+                        <p>✓ 5 sorğu/ay</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="border-yellow-500/30 bg-yellow-500/5">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Crown className="h-4 w-4 text-yellow-500" />
+                          Enterprise Plan
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="text-xs text-muted-foreground space-y-1">
+                        <p>✓ Pro-dakı hər şey</p>
+                        <p>✓ Limitsiz sorğu</p>
+                        <p>✓ API girişi</p>
+                        <p>✓ Xüsusi AI hesabatlar</p>
+                        <p>✓ Dedikasiyalı meneger</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           {isAdmin && (
             <TabsContent value="users">
