@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          new_data: Json | null
+          old_data: Json | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           address: string | null
@@ -125,6 +164,87 @@ export type Database = {
           },
         ]
       }
+      email_campaigns: {
+        Row: {
+          company_id: string
+          content: string
+          created_at: string
+          id: string
+          sent_at: string | null
+          sent_count: number | null
+          status: string
+          subject: string
+        }
+        Insert: {
+          company_id: string
+          content: string
+          created_at?: string
+          id?: string
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject: string
+        }
+        Update: {
+          company_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_campaigns_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_campaigns_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -138,6 +258,7 @@ export type Database = {
           platform_activity_months: number | null
           review_reply_notifications: boolean | null
           survey_participation_count: number | null
+          total_points: number | null
           total_reviews_count: number | null
           trust_score: number | null
           updated_at: string
@@ -155,6 +276,7 @@ export type Database = {
           platform_activity_months?: number | null
           review_reply_notifications?: boolean | null
           survey_participation_count?: number | null
+          total_points?: number | null
           total_reviews_count?: number | null
           trust_score?: number | null
           updated_at?: string
@@ -172,6 +294,7 @@ export type Database = {
           platform_activity_months?: number | null
           review_reply_notifications?: boolean | null
           survey_participation_count?: number | null
+          total_points?: number | null
           total_reviews_count?: number | null
           trust_score?: number | null
           updated_at?: string
@@ -208,6 +331,51 @@ export type Database = {
           },
           {
             foreignKeyName: "review_helpful_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_history: {
+        Row: {
+          created_at: string
+          id: string
+          old_content: string | null
+          old_rating: number | null
+          old_title: string | null
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          old_content?: string | null
+          old_rating?: number | null
+          old_title?: string | null
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          old_content?: string | null
+          old_rating?: number | null
+          old_title?: string | null
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_history_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_history_review_id_fkey"
             columns: ["review_id"]
             isOneToOne: false
             referencedRelation: "reviews_public"
@@ -384,6 +552,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_rewards: {
+        Row: {
+          action_type: string
+          created_at: string
+          description: string | null
+          id: string
+          points: number
+          reference_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number
+          reference_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number
+          reference_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

@@ -16,7 +16,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Shield, Building2, MessageSquare, Users, Check, X, Loader2, Eye, Image, Star, ExternalLink, AlertTriangle, Flag, CreditCard, Crown, Sparkles } from 'lucide-react';
+import { Shield, Building2, MessageSquare, Users, Check, X, Loader2, Eye, Image, Star, ExternalLink, AlertTriangle, Flag, CreditCard, Crown, Sparkles, BarChart3, Clock } from 'lucide-react';
+import { AdminDashboardStats } from '@/components/admin/AdminDashboardStats';
+import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
 import { getPlanName, getPlanBadgeVariant, type SubscriptionPlan } from '@/lib/subscriptionPermissions';
 
 interface Company {
@@ -371,8 +373,12 @@ const AdminPage = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="companies" className="space-y-4">
+        <Tabs defaultValue="dashboard" className="space-y-4">
           <TabsList className="flex-wrap">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
             <TabsTrigger value="companies">Şirkətlər</TabsTrigger>
             <TabsTrigger value="reviews">Rəylər</TabsTrigger>
             <TabsTrigger value="flagged" className="flex items-center gap-2">
@@ -384,7 +390,15 @@ const AdminPage = () => {
               Paketlər
             </TabsTrigger>}
             {isAdmin && <TabsTrigger value="users">İstifadəçilər</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="audit" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Audit Log
+            </TabsTrigger>}
           </TabsList>
+
+          <TabsContent value="dashboard">
+            <AdminDashboardStats />
+          </TabsContent>
 
           <TabsContent value="companies">
             <Card>

@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { NotificationCenter } from "@/components/customer/NotificationCenter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,6 +63,7 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-2">
+            <NotificationCenter />
             <ThemeSwitcher />
             <LanguageSwitcher />
             {!loading && (
