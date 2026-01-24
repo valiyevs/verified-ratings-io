@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "./ui/button";
+import AIVerificationBadge from "./AIVerificationBadge";
 
 interface ReviewCardProps {
   id: string;
@@ -23,6 +24,8 @@ interface ReviewCardProps {
   companyReplyAt?: string;
   isCompanyOwner?: boolean;
   onReplySubmit?: (reviewId: string, reply: string) => void;
+  trustScore?: number;
+  status?: string;
 }
 
 const ReviewCard = ({ 
@@ -41,7 +44,9 @@ const ReviewCard = ({
   companyReply,
   companyReplyAt,
   isCompanyOwner,
-  onReplySubmit
+  onReplySubmit,
+  trustScore,
+  status
 }: ReviewCardProps) => {
   const { user } = useAuth();
   const [helpfulCount, setHelpfulCount] = useState(helpful);
@@ -121,6 +126,14 @@ const ReviewCard = ({
             <div className="flex items-center gap-2">
               <span className="font-semibold text-foreground">{author}</span>
               <CheckCircle className="w-4 h-4 text-primary" />
+              {/* AI Verification Badge */}
+              {status === 'approved' && (
+                <AIVerificationBadge 
+                  status="verified" 
+                  score={trustScore ? Math.round(trustScore * 100) : 85} 
+                  compact 
+                />
+              )}
             </div>
             <span className="text-sm text-muted-foreground">{date}</span>
           </div>

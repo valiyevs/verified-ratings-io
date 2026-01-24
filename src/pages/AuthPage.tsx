@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Shield, Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { ArrowLeft, Shield, Eye, EyeOff, Mail, Lock, User, Phone, Bot, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ const AuthPage = () => {
   
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [registerMethod, setRegisterMethod] = useState<'email' | 'phone'>('phone');
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -26,8 +27,8 @@ const AuthPage = () => {
   // Register form state
   const [registerName, setRegisterName] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPhone, setRegisterPhone] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
-  const [registerFin, setRegisterFin] = useState("");
 
   // Redirect if already logged in
   useEffect(() => {
@@ -35,6 +36,13 @@ const AuthPage = () => {
       navigate("/");
     }
   }, [user, loading, navigate]);
+
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-digits
+    const digits = value.replace(/\D/g, '');
+    // Limit to 9 digits (excluding country code)
+    return digits.slice(0, 9);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,19 +89,28 @@ const AuthPage = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!registerName || !registerEmail || !registerPassword || !registerFin) {
+    if (!registerName || !registerPassword) {
       toast({
         title: "Xəta",
-        description: "Bütün sahələri doldurun",
+        description: "Ad və şifrə sahələrini doldurun",
         variant: "destructive",
       });
       return;
     }
 
-    if (registerFin.length !== 7) {
+    if (registerMethod === 'email' && !registerEmail) {
       toast({
         title: "Xəta",
-        description: "FİN kod 7 simvoldan ibarət olmalıdır",
+        description: "Email sahəsini doldurun",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (registerMethod === 'phone' && registerPhone.length !== 9) {
+      toast({
+        title: "Xəta",
+        description: "Telefon nömrəsi 9 rəqəmdən ibarət olmalıdır",
         variant: "destructive",
       });
       return;
@@ -110,7 +127,12 @@ const AuthPage = () => {
 
     setIsLoading(true);
     
-    const { error } = await signUp(registerEmail, registerPassword, registerName);
+    // For phone registration, create an email from phone number
+    const email = registerMethod === 'phone' 
+      ? `+994${registerPhone}@phone.ratings.az`
+      : registerEmail;
+    
+    const { error } = await signUp(email, registerPassword, registerName);
     
     setIsLoading(false);
     
@@ -118,7 +140,9 @@ const AuthPage = () => {
       let errorMessage = "Qeydiyyat zamanı xəta baş verdi";
       
       if (error.message.includes("User already registered")) {
-        errorMessage = "Bu email artıq qeydiyyatdan keçib";
+        errorMessage = registerMethod === 'phone' 
+          ? "Bu telefon nömrəsi artıq qeydiyyatdan keçib"
+          : "Bu email artıq qeydiyyatdan keçib";
       } else if (error.message.includes("Password")) {
         errorMessage = "Şifrə tələblərə uyğun deyil";
       }
@@ -176,6 +200,32 @@ const AuthPage = () => {
             </Link>
           </div>
 
+          {/* Trust Indicators */}
+          <div className="mb-6 p-4 bg-secondary/50 rounded-xl border border-border">
+            <div className="flex items-center gap-3 mb-3">
+              <Bot className="w-5 h-5 text-primary" />
+              <span className="text-sm font-medium text-foreground">AI ilə qorunan platform</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                <span>AI rəy doğrulaması</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                <span>Spam qoruması</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                <span>Saxta rəy aşkarlama</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                <span>Güvən balı sistemi</span>
+              </div>
+            </div>
+          </div>
+
           <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">{t("nav.login")}</CardTitle>
@@ -193,13 +243,13 @@ const AuthPage = () => {
                 <TabsContent value="login">
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="login-email">Email</Label>
+                      <Label htmlFor="login-email">Email və ya Telefon</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           id="login-email"
-                          type="email"
-                          placeholder="email@example.com"
+                          type="text"
+                          placeholder="email@example.com və ya +994xxxxxxxxx"
                           value={loginEmail}
                           onChange={(e) => setLoginEmail(e.target.value)}
                           className="pl-10"
@@ -236,6 +286,30 @@ const AuthPage = () => {
                 </TabsContent>
                 
                 <TabsContent value="register">
+                  {/* Registration method selector */}
+                  <div className="flex gap-2 mb-4">
+                    <Button
+                      type="button"
+                      variant={registerMethod === 'phone' ? 'default' : 'outline'}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setRegisterMethod('phone')}
+                    >
+                      <Phone className="w-4 h-4 mr-2" />
+                      Telefon
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={registerMethod === 'email' ? 'default' : 'outline'}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setRegisterMethod('email')}
+                    >
+                      <Mail className="w-4 h-4 mr-2" />
+                      Email
+                    </Button>
+                  </div>
+
                   <form onSubmit={handleRegister} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="register-name">Ad Soyad</Label>
@@ -252,37 +326,42 @@ const AuthPage = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="register-fin">FİN kod</Label>
-                      <div className="relative">
-                        <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          id="register-fin"
-                          type="text"
-                          placeholder="7 simvol"
-                          maxLength={7}
-                          value={registerFin}
-                          onChange={(e) => setRegisterFin(e.target.value.toUpperCase())}
-                          className="pl-10 uppercase"
-                        />
+                    {registerMethod === 'phone' ? (
+                      <div className="space-y-2">
+                        <Label htmlFor="register-phone">Telefon nömrəsi</Label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <div className="absolute left-10 top-1/2 -translate-y-1/2 text-muted-foreground text-sm border-r pr-2">
+                            +994
+                          </div>
+                          <Input
+                            id="register-phone"
+                            type="tel"
+                            placeholder="XX XXX XX XX"
+                            value={registerPhone}
+                            onChange={(e) => setRegisterPhone(formatPhoneNumber(e.target.value))}
+                            className="pl-[4.5rem]"
+                            maxLength={9}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">Nümunə: 50 123 45 67</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">Doğrulama üçün FİN kodunuz tələb olunur</p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="register-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          id="register-email"
-                          type="email"
-                          placeholder="email@example.com"
-                          value={registerEmail}
-                          onChange={(e) => setRegisterEmail(e.target.value)}
-                          className="pl-10"
-                        />
+                    ) : (
+                      <div className="space-y-2">
+                        <Label htmlFor="register-email">Email</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            id="register-email"
+                            type="email"
+                            placeholder="email@example.com"
+                            value={registerEmail}
+                            onChange={(e) => setRegisterEmail(e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )}
                     
                     <div className="space-y-2">
                       <Label htmlFor="register-password">Şifrə</Label>
