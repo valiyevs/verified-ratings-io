@@ -11,9 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { User, Star, Building2, Edit, Save, Loader2, Heart, X, Bell, Mail } from 'lucide-react';
+import { User, Star, Building2, Edit, Save, Loader2, Heart, X, Bell, Mail, Gift, Scale } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { RewardsCenter } from '@/components/customer/RewardsCenter';
+import { ReviewComparison } from '@/components/customer/ReviewComparison';
 
 interface Profile {
   id: string;
@@ -293,7 +295,7 @@ const ProfilePage = () => {
 
           {/* Tabs for Reviews, Companies and Followed */}
           <Tabs defaultValue="reviews" className="space-y-4">
-            <TabsList>
+            <TabsList className="flex-wrap">
               <TabsTrigger value="reviews">
                 <Star className="h-4 w-4 mr-2" />
                 Rəylərim ({reviews.length})
@@ -305,6 +307,14 @@ const ProfilePage = () => {
               <TabsTrigger value="followed">
                 <Heart className="h-4 w-4 mr-2" />
                 İzlədiklərim ({followedCompanies.length})
+              </TabsTrigger>
+              <TabsTrigger value="rewards">
+                <Gift className="h-4 w-4 mr-2" />
+                Mükafatlar
+              </TabsTrigger>
+              <TabsTrigger value="compare">
+                <Scale className="h-4 w-4 mr-2" />
+                Müqayisə
               </TabsTrigger>
               <TabsTrigger value="settings">
                 <Bell className="h-4 w-4 mr-2" />
@@ -467,6 +477,16 @@ const ProfilePage = () => {
                   ))}
                 </div>
               )}
+            </TabsContent>
+
+            {/* Rewards Tab */}
+            <TabsContent value="rewards">
+              <RewardsCenter />
+            </TabsContent>
+
+            {/* Comparison Tab */}
+            <TabsContent value="compare">
+              <ReviewComparison />
             </TabsContent>
 
             {/* Notification Settings Tab */}
