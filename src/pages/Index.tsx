@@ -8,6 +8,7 @@ import HowItWorks from "@/components/HowItWorks";
 import BusinessCTA from "@/components/BusinessCTA";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
+import TrustIndicators from "@/components/TrustIndicators";
 
 const Index = () => {
   return (
@@ -15,6 +16,7 @@ const Index = () => {
       <Header />
       <main>
         <HeroSection />
+        <TrustIndicators />
         <FeaturedCompanies />
         <LatestReviewsCarousel />
         <FeaturedSurveys />
