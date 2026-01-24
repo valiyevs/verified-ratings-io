@@ -1,6 +1,6 @@
 import { Bot, CheckCircle, AlertTriangle, XCircle, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 
 interface AIVerificationBadgeProps {
   status: 'verified' | 'pending' | 'flagged' | 'rejected' | 'analyzing';
@@ -67,35 +67,41 @@ const AIVerificationBadge = ({ status, score, compact = false }: AIVerificationB
 
   if (compact) {
     return (
-      <Tooltip>
-        <TooltipTrigger>
-          <div className={`p-1 rounded ${config.className}`}>
-            <Icon className={`w-4 h-4 ${status === 'analyzing' ? 'animate-spin' : ''}`} />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="font-medium">{config.label}</p>
-          <p className="text-xs text-muted-foreground">{config.description}</p>
-        </TooltipContent>
-      </Tooltip>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className={`inline-flex p-1 rounded cursor-help ${config.className}`}>
+              <Icon className={`w-4 h-4 ${status === 'analyzing' ? 'animate-spin' : ''}`} />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="font-medium">{config.label}</p>
+            <p className="text-xs text-muted-foreground">{config.description}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 
   return (
-    <Tooltip>
-      <TooltipTrigger>
-        <Badge variant={config.variant} className={`flex items-center gap-1.5 ${config.className}`}>
-          <Icon className={`w-3.5 h-3.5 ${status === 'analyzing' ? 'animate-spin' : ''}`} />
-          <span>{config.label}</span>
-          {score !== undefined && status === 'verified' && (
-            <span className="text-xs opacity-80">({score}%)</span>
-          )}
-        </Badge>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>{config.description}</p>
-      </TooltipContent>
-    </Tooltip>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex">
+            <Badge variant={config.variant} className={`flex items-center gap-1.5 cursor-help ${config.className}`}>
+              <Icon className={`w-3.5 h-3.5 ${status === 'analyzing' ? 'animate-spin' : ''}`} />
+              <span>{config.label}</span>
+              {score !== undefined && status === 'verified' && (
+                <span className="text-xs opacity-80">({score}%)</span>
+              )}
+            </Badge>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{config.description}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
