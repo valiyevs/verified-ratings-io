@@ -51,16 +51,16 @@ const TransparencyIndicators = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="space-y-2 cursor-help">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
+              <span className="block space-y-2 cursor-help">
+                <span className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
                     <Shield className="h-4 w-4 text-primary" />
                     <span className="text-muted-foreground">FIN təsdiqli rəylər</span>
-                  </div>
+                  </span>
                   <span className="font-medium text-foreground">{verifiedPercentage}%</span>
-                </div>
+                </span>
                 <Progress value={verifiedPercentage} className="h-2" />
-              </div>
+              </span>
             </TooltipTrigger>
             <TooltipContent>
               <p>FIN kodu ilə təsdiqlənmiş istifadəçilərdən gələn rəylərin faizi</p>
@@ -72,21 +72,21 @@ const TransparencyIndicators = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="space-y-2 cursor-help">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
+              <span className="block space-y-2 cursor-help">
+                <span className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-primary" />
                     <span className="text-muted-foreground">Cavab faizi</span>
-                  </div>
+                  </span>
                   <span className={`font-medium ${getResponseRateColor(responseRate || 0)}`}>
                     {(responseRate || 0).toFixed(0)}%
                   </span>
-                </div>
+                </span>
                 <Progress 
                   value={responseRate || 0} 
                   className="h-2"
                 />
-              </div>
+              </span>
             </TooltipTrigger>
             <TooltipContent>
               <p>Şirkətin rəylərə rəsmi cavab vermə faizi</p>
@@ -98,15 +98,15 @@ const TransparencyIndicators = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center justify-between text-sm cursor-help">
-                <div className="flex items-center gap-2">
+              <span className="flex items-center justify-between text-sm cursor-help">
+                <span className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-primary" />
                   <span className="text-muted-foreground">Orta cavab müddəti</span>
-                </div>
+                </span>
                 <span className="font-medium text-foreground">
                   {getResponseTimeLabel(avgResponseTimeHours)}
                 </span>
-              </div>
+              </span>
             </TooltipTrigger>
             <TooltipContent>
               <p>Rəylərə cavab vermək üçün orta gözləmə müddəti</p>
