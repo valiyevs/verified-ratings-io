@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "./ui/button";
 import AIVerificationBadge from "./AIVerificationBadge";
+import ModeratorBadge from "./ModeratorBadge";
+import ReviewHistoryModal from "./ReviewHistoryModal";
 
 interface ReviewCardProps {
   id: string;
@@ -13,6 +15,7 @@ interface ReviewCardProps {
   date: string;
   rating: number;
   text: string;
+  title?: string;
   helpful: number;
   hasReceipt: boolean;
   imageUrl?: string;
@@ -26,6 +29,7 @@ interface ReviewCardProps {
   onReplySubmit?: (reviewId: string, reply: string) => void;
   trustScore?: number;
   status?: string;
+  hasHistory?: boolean;
 }
 
 const ReviewCard = ({ 
@@ -33,7 +37,8 @@ const ReviewCard = ({
   author, 
   date, 
   rating, 
-  text, 
+  text,
+  title,
   helpful, 
   hasReceipt, 
   imageUrl,
@@ -46,7 +51,8 @@ const ReviewCard = ({
   isCompanyOwner,
   onReplySubmit,
   trustScore,
-  status
+  status,
+  hasHistory
 }: ReviewCardProps) => {
   const { user } = useAuth();
   const [helpfulCount, setHelpfulCount] = useState(helpful);
@@ -123,7 +129,7 @@ const ReviewCard = ({
             {author.charAt(0)}
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-foreground">{author}</span>
               <CheckCircle className="w-4 h-4 text-primary" />
               {/* AI Verification Badge */}
@@ -134,8 +140,21 @@ const ReviewCard = ({
                   compact 
                 />
               )}
+              {/* Moderator Badge */}
+              {status === 'approved' && <ModeratorBadge compact />}
             </div>
-            <span className="text-sm text-muted-foreground">{date}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">{date}</span>
+              {/* Review History */}
+              {hasHistory && title && (
+                <ReviewHistoryModal 
+                  reviewId={id}
+                  currentTitle={title}
+                  currentContent={text}
+                  currentRating={rating}
+                />
+              )}
+            </div>
           </div>
         </div>
         <div className="text-right">
