@@ -11,43 +11,43 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(), 
+    react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt'],
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.ico", "robots.txt"],
       manifest: {
-        name: 'ratings.az - Müştəri Məmnuniyyəti Platforması',
-        short_name: 'ratings.az',
-        description: 'Azərbaycan daxilində real istifadəçi rəylərinə əsaslanan şirkət reytinqləri',
-        theme_color: '#0d9488',
-        background_color: '#f8fafc',
-        display: 'standalone',
-        orientation: 'portrait',
-        start_url: '/',
+        name: "Ratings.az - Müştəri Məmnuniyyəti Platforması",
+        short_name: "Ratings.az",
+        description: "Azərbaycan daxilində real istifadəçi rəylərinə əsaslanan şirkət reytinqləri",
+        theme_color: "#0d9488",
+        background_color: "#f8fafc",
+        display: "standalone",
+        orientation: "portrait",
+        start_url: "/",
         icons: [
           {
-            src: '/favicon.ico',
-            sizes: '64x64',
-            type: 'image/x-icon'
+            src: "/favicon.ico",
+            sizes: "64x64",
+            type: "image/x-icon",
           },
           {
-            src: '/pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
+            src: "/pwa-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
           },
           {
-            src: '/pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
+            src: "/pwa-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
+          },
+        ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
-      }
-    })
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+      },
+    }),
   ].filter(Boolean),
   resolve: {
     alias: {
