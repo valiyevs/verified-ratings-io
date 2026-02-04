@@ -69,6 +69,8 @@ interface Review {
   helpful_count?: number;
   company_reply?: string;
   company_reply_at?: string;
+  trust_score?: number;
+  has_history?: boolean;
 }
 
 const CompanyPage = () => {
@@ -153,9 +155,19 @@ const CompanyPage = () => {
         .select('user_id, full_name')
         .in('user_id', userIds);
 
+      // Check for review history
+      const reviewIds = reviewsData.map(r => r.id);
+      const { data: historyData } = await supabase
+        .from('review_history')
+        .select('review_id')
+        .in('review_id', reviewIds);
+      
+      const reviewsWithHistory = new Set(historyData?.map(h => h.review_id) || []);
+
       const reviewsWithAuthors = reviewsData.map(review => ({
         ...review,
-        author_name: profiles?.find(p => p.user_id === review.user_id)?.full_name || 'Anonim'
+        author_name: profiles?.find(p => p.user_id === review.user_id)?.full_name || 'Anonim',
+        has_history: reviewsWithHistory.has(review.id)
       }));
       setReviews(reviewsWithAuthors);
 
@@ -529,6 +541,7 @@ const CompanyPage = () => {
                         author={review.author_name || 'Anonim'}
                         date={new Date(review.created_at).toLocaleDateString('az-AZ', { day: 'numeric', month: 'long', year: 'numeric' })}
                         rating={review.rating}
+                        title={review.title}
                         text={review.content}
                         helpful={review.helpful_count || 0}
                         hasReceipt={!!review.image_url}
@@ -541,6 +554,9 @@ const CompanyPage = () => {
                         companyReplyAt={review.company_reply_at}
                         isCompanyOwner={isCompanyOwner}
                         onReplySubmit={handleCompanyReply}
+                        trustScore={review.trust_score}
+                        status={review.status}
+                        hasHistory={review.has_history}
                       />
                     ))
                   ) : (

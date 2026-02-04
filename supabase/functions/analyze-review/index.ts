@@ -149,9 +149,34 @@ JSON formatında cavab ver:
       analysis = { is_suspicious: false, confidence: 0.5, reasons: [], sentiment: "neutral", keywords: [] };
     }
 
+    // Calculate trust score (inverse of suspicion confidence)
+    const trustScore = analysis.is_suspicious 
+      ? Math.max(0.1, 1 - analysis.confidence) 
+      : Math.min(1, 0.7 + (analysis.confidence * 0.3));
+
+    // Update review with trust score using service role
+    const serviceClient = createClient(
+      supabaseUrl,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    await serviceClient
+      .from('reviews')
+      .update({ 
+        trust_score: trustScore,
+        is_flagged: analysis.is_suspicious && analysis.confidence > 0.7,
+        flag_reason: analysis.is_suspicious 
+          ? `AI: ${analysis.reasons?.slice(0, 3).join(', ') || 'Şübhəli məzmun'}` 
+          : null
+      })
+      .eq('id', reviewId);
+
     return new Response(JSON.stringify({
       reviewId,
-      analysis,
+      analysis: {
+        ...analysis,
+        trust_score: trustScore
+      },
       analyzed_at: new Date().toISOString(),
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
