@@ -16,6 +16,9 @@ interface Company {
   review_count: number | null;
   description: string | null;
   subscription_plan: string | null;
+  is_sponsored: boolean | null;
+  response_rate: number | null;
+  verified_reviews_count: number | null;
 }
 
 const FeaturedCompanies = () => {
@@ -31,8 +34,9 @@ const FeaturedCompanies = () => {
     try {
       const { data, error } = await supabase
         .from("companies")
-        .select("id, name, category, logo_url, average_rating, review_count, description, subscription_plan")
+        .select("id, name, category, logo_url, average_rating, review_count, description, subscription_plan, is_sponsored, response_rate, verified_reviews_count")
         .eq("status", "approved")
+        .order("is_sponsored", { ascending: false })
         .order("average_rating", { ascending: false, nullsFirst: false })
         .limit(6);
 
@@ -125,6 +129,9 @@ const FeaturedCompanies = () => {
                 trend="stable"
                 verified={true}
                 topReview={company.description || undefined}
+                isSponsored={company.is_sponsored || false}
+                responseRate={company.response_rate || undefined}
+                verifiedReviewsCount={company.verified_reviews_count || undefined}
               />
             </div>
           ))}
