@@ -27,6 +27,10 @@ interface Profile {
   email_notifications_enabled: boolean | null;
   review_reply_notifications: boolean | null;
   company_update_notifications: boolean | null;
+  trust_score: number | null;
+  is_fin_verified: boolean | null;
+  total_reviews_count: number | null;
+  platform_activity_months: number | null;
 }
 
 interface UserReview {
@@ -269,7 +273,62 @@ const ProfilePage = () => {
                 )}
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              {/* Trust Score Section */}
+              <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                      <Star className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">Güvən Balı</h3>
+                      <p className="text-xs text-muted-foreground">Platformadakı etibarlılığınız</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-primary">
+                      {profile?.trust_score ? Math.round(profile.trust_score * 100) : 100}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {profile?.is_fin_verified ? '✓ FIN Təsdiqli' : 'Təsdiqlənməyib'}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Progress bar */}
+                <div className="w-full bg-secondary rounded-full h-2 mb-3">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${(profile?.trust_score || 1) * 100}%` }}
+                  />
+                </div>
+                
+                {/* How to increase trust score */}
+                <div className="bg-background/50 rounded-lg p-3 mt-3">
+                  <p className="text-xs font-medium text-foreground mb-2">Güvən balınızı necə artıra bilərsiniz:</p>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li className="flex items-center gap-2">
+                      <span className={profile?.is_fin_verified ? 'text-green-500' : ''}>•</span>
+                      FIN kodu ilə hesabınızı təsdiqləyin (+20%)
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className={(profile?.total_reviews_count || 0) >= 5 ? 'text-green-500' : ''}>•</span>
+                      5+ keyfiyyətli rəy yazın (+15%)
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className={(profile?.platform_activity_months || 0) >= 6 ? 'text-green-500' : ''}>•</span>
+                      6+ ay aktiv olun (+10%)
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span>•</span>
+                      Rəylərinizə qəbz/şəkil əlavə edin (+5%)
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              {/* Stats Grid */}
               <div className="grid grid-cols-4 gap-4 text-center">
                 <div>
                   <p className="text-2xl font-bold">{reviews.length}</p>
