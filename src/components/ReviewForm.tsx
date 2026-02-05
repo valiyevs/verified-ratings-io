@@ -106,8 +106,9 @@ const ReviewForm = ({ companyName, companyId, onClose, onSubmit }: ReviewFormPro
   const uploadImage = async (): Promise<string | undefined> => {
     if (!imageFile || !user) return undefined;
     
+    // Use random UUID instead of user_id to prevent user enumeration
     const fileExt = imageFile.name.split('.').pop();
-    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
     
     const { error: uploadError } = await supabase.storage
       .from('review-images')
@@ -118,11 +119,10 @@ const ReviewForm = ({ companyName, companyId, onClose, onSubmit }: ReviewFormPro
       throw uploadError;
     }
 
-    const { data } = supabase.storage
-      .from('review-images')
-      .getPublicUrl(fileName);
-
-    return data.publicUrl;
+    // Store the file path reference (not public URL) for signed URL generation later
+    // Format: bucket-relative path that can be used with createSignedUrl
+    const storagePath = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/review-images/${fileName}`;
+    return storagePath;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

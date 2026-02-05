@@ -1,6 +1,6 @@
 import { useState } from "react";
 import StarRating from "./StarRating";
-import { ThumbsUp, CheckCircle, ImageIcon, Star, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { ThumbsUp, CheckCircle, ImageIcon, Star, MessageCircle, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -8,6 +8,7 @@ import { Button } from "./ui/button";
 import AIVerificationBadge from "./AIVerificationBadge";
 import ModeratorBadge from "./ModeratorBadge";
 import ReviewHistoryModal from "./ReviewHistoryModal";
+import { useSignedImageUrl } from "@/hooks/useSignedImageUrl";
 
 interface ReviewCardProps {
   id: string;
@@ -61,6 +62,9 @@ const ReviewCard = ({
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [showCriteria, setShowCriteria] = useState(false);
+  
+  // Use signed URL for private storage bucket
+  const { signedUrl, loading: imageLoading, error: imageError } = useSignedImageUrl(imageUrl);
 
   const handleHelpful = async () => {
     if (!user) {
@@ -193,11 +197,23 @@ const ReviewCard = ({
             {showImage ? 'Şəkli gizlət' : 'Qəbzi/şəkli göstər'}
           </button>
           {showImage && (
-            <img 
-              src={imageUrl} 
-              alt="Review attachment" 
-              className="mt-2 max-w-full max-h-64 rounded-lg border border-border"
-            />
+            <div className="mt-2">
+              {imageLoading ? (
+                <div className="flex items-center justify-center h-32 bg-secondary/50 rounded-lg">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : imageError ? (
+                <div className="flex items-center justify-center h-32 bg-secondary/50 rounded-lg text-muted-foreground text-sm">
+                  Şəkil yüklənə bilmədi
+                </div>
+              ) : signedUrl ? (
+                <img 
+                  src={signedUrl} 
+                  alt="Review attachment" 
+                  className="max-w-full max-h-64 rounded-lg border border-border"
+                />
+              ) : null}
+            </div>
           )}
         </div>
       )}
