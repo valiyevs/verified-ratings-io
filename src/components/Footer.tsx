@@ -73,7 +73,7 @@ const Footer = () => {
             © 2024 ratings.az. {t("footer.rights")}
           </p>
           <p className="text-primary-foreground/40 text-sm">
-            {t("footer.simaIntegration")}
+            {t("footer.aiIntegration")}
           </p>
         </div>
       </div>

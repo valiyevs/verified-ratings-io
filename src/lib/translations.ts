@@ -80,7 +80,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.faq": "Tez-tez verilən suallar",
     "footer.privacy": "Gizlilik Siyasəti",
     "footer.rights": "Bütün hüquqlar qorunur.",
-    "footer.simaIntegration": "AI inteqrasiyası ilə təhlükəsiz giriş",
+    "footer.aiIntegration": "AI inteqrasiyası ilə təhlükəsiz giriş",
     "footer.latestReviews": "Son Rəylər",
 
     // Search Page
@@ -286,7 +286,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.faq": "FAQ",
     "footer.privacy": "Privacy Policy",
     "footer.rights": "All rights reserved.",
-    "footer.simaIntegration": "Secure login with AI integration",
+    "footer.aiIntegration": "Secure login with AI integration",
     "footer.latestReviews": "Latest Reviews",
 
     // Search Page
@@ -492,7 +492,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.faq": "Часто задаваемые вопросы",
     "footer.privacy": "Политика конфиденциальности",
     "footer.rights": "Все права защищены.",
-    "footer.simaIntegration": "Безопасный вход с интеграцией AI",
+    "footer.aiIntegration": "Безопасный вход с интеграцией AI",
     "footer.latestReviews": "Последние отзывы",
 
     // Search Page

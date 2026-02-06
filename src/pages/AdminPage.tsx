@@ -16,10 +16,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Shield, Building2, MessageSquare, Users, Check, X, Loader2, Eye, Image, Star, ExternalLink, AlertTriangle, Flag, CreditCard, Crown, Sparkles, BarChart3, Clock } from 'lucide-react';
+import { Shield, Building2, MessageSquare, Users, Check, X, Loader2, Eye, Image, Star, ExternalLink, AlertTriangle, Flag, CreditCard, Crown, Sparkles, BarChart3, Clock, UserPlus } from 'lucide-react';
 import { AdminDashboardStats } from '@/components/admin/AdminDashboardStats';
 import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
 import { getPlanName, getPlanBadgeVariant, type SubscriptionPlan } from '@/lib/subscriptionPermissions';
+import { CompanyMemberManager } from '@/components/admin/CompanyMemberManager';
 
 interface Company {
   id: string;
@@ -390,6 +391,10 @@ const AdminPage = () => {
               Paketlər
             </TabsTrigger>}
             {isAdmin && <TabsTrigger value="users">İstifadəçilər</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="members" className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4" />
+              Şirkət Üzvləri
+            </TabsTrigger>}
             {isAdmin && <TabsTrigger value="audit" className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               Audit Log
@@ -910,6 +915,12 @@ const AdminPage = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+          )}
+
+          {isAdmin && (
+            <TabsContent value="members">
+              <CompanyMemberManager />
             </TabsContent>
           )}
         </Tabs>
