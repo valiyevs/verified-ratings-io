@@ -13,7 +13,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.writeReview": "Rəy yaz",
 
     // Hero
-    "hero.badge": "SİMA ilə doğrulanmış rəylər",
+    "hero.badge": "AI ilə doğrulanmış rəylər",
     "hero.title": "ratings.az",
     "hero.subtitle": "Azərbaycanın Şəffaf Reytinq Platforması",
     "hero.description": "Real istifadəçi rəylərinə əsaslanan etibarlı şirkət reytinqləri. Saxta rəylərə son, şəffaflığa başlanğıc.",
@@ -49,7 +49,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // How It Works
     "howItWorks.title": "Necə İşləyir?",
     "howItWorks.subtitle": "Sadə addımlarla şəffaf rəy sistemi",
-    "howItWorks.step1.title": "SİMA ilə Qeydiyyat",
+    "howItWorks.step1.title": "AI ilə Qeydiyyat",
     "howItWorks.step1.desc": "FİN kodunuzla təhlükəsiz giriş edin",
     "howItWorks.step2.title": "Şirkət Seçin",
     "howItWorks.step2.desc": "Rəy yazmaq istədiyiniz şirkəti tapın",
@@ -80,7 +80,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.faq": "Tez-tez verilən suallar",
     "footer.privacy": "Gizlilik Siyasəti",
     "footer.rights": "Bütün hüquqlar qorunur.",
-    "footer.simaIntegration": "SİMA inteqrasiyası ilə təhlükəsiz giriş",
+    "footer.simaIntegration": "AI inteqrasiyası ilə təhlükəsiz giriş",
     "footer.latestReviews": "Son Rəylər",
 
     // Search Page
@@ -219,7 +219,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.writeReview": "Write Review",
 
     // Hero
-    "hero.badge": "Reviews verified with SIMA",
+    "hero.badge": "Reviews verified with AI",
     "hero.title": "ratings.az",
     "hero.subtitle": "Azerbaijan's Transparent Rating Platform",
     "hero.description": "Reliable company ratings based on real user reviews. Say goodbye to fake reviews, welcome transparency.",
@@ -255,7 +255,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // How It Works
     "howItWorks.title": "How It Works?",
     "howItWorks.subtitle": "Transparent review system in simple steps",
-    "howItWorks.step1.title": "Register with SIMA",
+    "howItWorks.step1.title": "Register with AI",
     "howItWorks.step1.desc": "Secure login with your FIN code",
     "howItWorks.step2.title": "Choose Company",
     "howItWorks.step2.desc": "Find the company you want to review",
@@ -286,7 +286,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.faq": "FAQ",
     "footer.privacy": "Privacy Policy",
     "footer.rights": "All rights reserved.",
-    "footer.simaIntegration": "Secure login with SIMA integration",
+    "footer.simaIntegration": "Secure login with AI integration",
     "footer.latestReviews": "Latest Reviews",
 
     // Search Page
@@ -425,7 +425,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.writeReview": "Написать отзыв",
 
     // Hero
-    "hero.badge": "Отзывы подтверждены SIMA",
+    "hero.badge": "Отзывы подтверждены AI",
     "hero.title": "ratings.az",
     "hero.subtitle": "Прозрачная рейтинговая платформа Азербайджана",
     "hero.description": "Надежные рейтинги компаний на основе реальных отзывов. Прощайте, фальшивые отзывы, здравствуй, прозрачность.",
@@ -461,7 +461,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // How It Works
     "howItWorks.title": "Как это работает?",
     "howItWorks.subtitle": "Прозрачная система отзывов в простых шагах",
-    "howItWorks.step1.title": "Регистрация через SIMA",
+    "howItWorks.step1.title": "Регистрация через AI",
     "howItWorks.step1.desc": "Безопасный вход с вашим ФИН кодом",
     "howItWorks.step2.title": "Выберите компанию",
     "howItWorks.step2.desc": "Найдите компанию для отзыва",
@@ -492,7 +492,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.faq": "Часто задаваемые вопросы",
     "footer.privacy": "Политика конфиденциальности",
     "footer.rights": "Все права защищены.",
-    "footer.simaIntegration": "Безопасный вход с интеграцией SIMA",
+    "footer.simaIntegration": "Безопасный вход с интеграцией AI",
     "footer.latestReviews": "Последние отзывы",
 
     // Search Page
