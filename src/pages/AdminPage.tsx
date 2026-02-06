@@ -16,7 +16,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Shield, Building2, MessageSquare, Users, Check, X, Loader2, Eye, Image, Star, ExternalLink, AlertTriangle, Flag, CreditCard, Crown, Sparkles, BarChart3, Clock, UserPlus } from 'lucide-react';
+import { Shield, Building2, MessageSquare, Users, Check, X, Loader2, Eye, Image, Star, ExternalLink, AlertTriangle, Flag, CreditCard, Crown, Sparkles, BarChart3, Clock, UserPlus, Search, RefreshCw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { AdminDashboardStats } from '@/components/admin/AdminDashboardStats';
 import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
 import { getPlanName, getPlanBadgeVariant, type SubscriptionPlan } from '@/lib/subscriptionPermissions';
@@ -87,6 +88,12 @@ const AdminPage = () => {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [companyDialogOpen, setCompanyDialogOpen] = useState(false);
   const [companyStatusNote, setCompanyStatusNote] = useState('');
+
+  // Owner change states
+  const [ownerSearchEmail, setOwnerSearchEmail] = useState('');
+  const [ownerSearchResults, setOwnerSearchResults] = useState<{user_id: string, full_name: string | null, email: string | null}[]>([]);
+  const [searchingOwner, setSearchingOwner] = useState(false);
+  const [changingOwner, setChangingOwner] = useState(false);
 
   // Review detail dialog
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
@@ -959,7 +966,7 @@ const AdminPage = () => {
 
               <div className="border-t pt-4">
                 <h4 className="font-semibold mb-3">Sahib Məlumatları</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 mb-3">
                   <div>
                     <Label className="text-muted-foreground">Ad Soyad</Label>
                     <p>{selectedCompany.owner_name || 'Naməlum'}</p>
@@ -969,6 +976,91 @@ const AdminPage = () => {
                     <p>{selectedCompany.owner_email || 'Naməlum'}</p>
                   </div>
                 </div>
+                
+                {isAdmin && (
+                  <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <RefreshCw className="h-3 w-3" />
+                      Sahibi Dəyişdir
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="E-poçt və ya ad ilə axtar..."
+                        value={ownerSearchEmail}
+                        onChange={(e) => setOwnerSearchEmail(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && ownerSearchEmail.trim()) {
+                            setSearchingOwner(true);
+                            supabase
+                              .from('profiles')
+                              .select('user_id, full_name, email')
+                              .or(`email.ilike.%${ownerSearchEmail}%,full_name.ilike.%${ownerSearchEmail}%`)
+                              .limit(5)
+                              .then(({ data }) => {
+                                setOwnerSearchResults(data || []);
+                                setSearchingOwner(false);
+                              });
+                          }
+                        }}
+                        className="text-sm"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={searchingOwner}
+                        onClick={() => {
+                          if (!ownerSearchEmail.trim()) return;
+                          setSearchingOwner(true);
+                          supabase
+                            .from('profiles')
+                            .select('user_id, full_name, email')
+                            .or(`email.ilike.%${ownerSearchEmail}%,full_name.ilike.%${ownerSearchEmail}%`)
+                            .limit(5)
+                            .then(({ data }) => {
+                              setOwnerSearchResults(data || []);
+                              setSearchingOwner(false);
+                            });
+                        }}
+                      >
+                        {searchingOwner ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    {ownerSearchResults.length > 0 && (
+                      <div className="border rounded-md divide-y max-h-36 overflow-y-auto">
+                        {ownerSearchResults.map(u => (
+                          <button
+                            key={u.user_id}
+                            className="w-full text-left px-3 py-2 hover:bg-accent transition-colors text-sm flex items-center justify-between"
+                            disabled={changingOwner}
+                            onClick={async () => {
+                              setChangingOwner(true);
+                              const { error } = await supabase
+                                .from('companies')
+                                .update({ owner_id: u.user_id })
+                                .eq('id', selectedCompany.id);
+                              if (error) {
+                                toast({ title: 'Xəta baş verdi', variant: 'destructive' });
+                              } else {
+                                toast({ title: `Sahib ${u.full_name || u.email} olaraq dəyişdirildi` });
+                                setOwnerSearchEmail('');
+                                setOwnerSearchResults([]);
+                                setCompanyDialogOpen(false);
+                                fetchData();
+                              }
+                              setChangingOwner(false);
+                            }}
+                          >
+                            <div>
+                              <p className="font-medium">{u.full_name || 'Adsız'}</p>
+                              <p className="text-xs text-muted-foreground">{u.email}</p>
+                            </div>
+                            <Badge variant="outline" className="text-xs">Seç</Badge>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="border-t pt-4">
