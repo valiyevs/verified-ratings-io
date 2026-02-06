@@ -372,11 +372,11 @@ const BusinessDashboard = () => {
           Şirkət səhifəsinə qayıt
         </Link>
 
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <BarChart3 className="h-8 w-8 text-primary" />
-              {company.name} - Dashboard
+            <h1 className="text-xl sm:text-3xl font-bold flex items-center gap-3">
+              <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+              <span className="truncate">{company.name} - Dashboard</span>
             </h1>
             <p className="text-muted-foreground mt-1">Şirkətinizin analitikası və performansı</p>
             {company.status === 'pending' && (

@@ -88,12 +88,15 @@ const HeroSection = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="w-full h-14 pl-14 pr-36 bg-card border-2 border-border rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-lg"
+                  className="w-full h-14 pl-14 pr-4 sm:pr-36 bg-card border-2 border-border rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-lg"
                 />
-                <Button variant="hero" className="absolute right-2 top-1/2 -translate-y-1/2" onClick={handleSearch}>
+                <Button variant="hero" className="absolute right-2 top-1/2 -translate-y-1/2 hidden sm:inline-flex" onClick={handleSearch}>
                   {t("hero.search")}
                 </Button>
               </div>
+              <Button variant="hero" className="sm:hidden w-full mt-2" onClick={handleSearch}>
+                {t("hero.search")}
+              </Button>
               <div className="flex flex-wrap items-center gap-2 mt-4 text-sm text-muted-foreground">
                 <span>{t("hero.popular")}</span>
                 {["Banklar", "Sığorta", "Telekommunikasiya", "E-ticarət"].map((tag) => (
