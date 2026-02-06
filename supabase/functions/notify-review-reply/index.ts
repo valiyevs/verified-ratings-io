@@ -85,19 +85,29 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (!company || company.owner_id !== userId) {
-      // Check if user is admin or moderator
-      const { data: roles } = await serviceClient
-        .from('user_roles')
+      // Check if user is a company member
+      const { data: membership } = await serviceClient
+        .from('company_members')
         .select('role')
-        .eq('user_id', userId);
-      
-      const isPrivileged = roles?.some(r => ['admin', 'moderator'].includes(r.role));
-      if (!isPrivileged) {
-        console.error("User not authorized to send notifications for this company");
-        return new Response(JSON.stringify({ error: 'Forbidden' }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
+        .eq('company_id', review.company_id)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!membership) {
+        // Check if user is admin or moderator
+        const { data: roles } = await serviceClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId);
+        
+        const isPrivileged = roles?.some(r => ['admin', 'moderator'].includes(r.role));
+        if (!isPrivileged) {
+          console.error("User not authorized to send notifications for this company");
+          return new Response(JSON.stringify({ error: 'Forbidden' }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
       }
     }
 
