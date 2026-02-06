@@ -18,7 +18,7 @@ const FAQ = () => {
       },
       {
         question: "Rəy yazmaq üçün qeydiyyatdan keçmək lazımdırmı?",
-        answer: "Bəli, şəffaflığı təmin etmək üçün istifadəçilər SİMA və ya email ilə qeydiyyatdan keçməlidir. Bu, saxta rəylərin qarşısını alır və platformanın etibarlılığını artırır."
+        answer: "Bəli, şəffaflığı təmin etmək üçün istifadəçilər AI doğrulama və ya email ilə qeydiyyatdan keçməlidir. Bu, saxta rəylərin qarşısını alır və platformanın etibarlılığını artırır."
       },
       {
         question: "Bir şirkətə neçə rəy yaza bilərəm?",
@@ -42,7 +42,7 @@ const FAQ = () => {
       },
       {
         question: "Saxta rəylərin qarşısı necə alınır?",
-        answer: "Platform bir neçə təhlükəsizlik mexanizmi istifadə edir: SİMA doğrulaması, AI analizi, 12 aylıq rəy limiti və moderator yoxlaması."
+        answer: "Platform bir neçə təhlükəsizlik mexanizmi istifadə edir: AI doğrulaması, AI analizi, 12 aylıq rəy limiti və moderator yoxlaması."
       }
     ],
     en: [
@@ -52,7 +52,7 @@ const FAQ = () => {
       },
       {
         question: "Do I need to register to write a review?",
-        answer: "Yes, to ensure transparency, users must register via SIMA or email. This prevents fake reviews and increases platform reliability."
+        answer: "Yes, to ensure transparency, users must register via AI verification or email. This prevents fake reviews and increases platform reliability."
       },
       {
         question: "How many reviews can I write for a company?",
@@ -76,7 +76,7 @@ const FAQ = () => {
       },
       {
         question: "How are fake reviews prevented?",
-        answer: "The platform uses several security mechanisms: SIMA verification, AI analysis, 12-month review limit, and moderator review."
+        answer: "The platform uses several security mechanisms: AI verification, AI analysis, 12-month review limit, and moderator review."
       }
     ],
     ru: [
@@ -86,7 +86,7 @@ const FAQ = () => {
       },
       {
         question: "Нужно ли регистрироваться, чтобы написать отзыв?",
-        answer: "Да, для обеспечения прозрачности пользователи должны зарегистрироваться через SIMA или email. Это предотвращает фальшивые отзывы и повышает надежность платформы."
+        answer: "Да, для обеспечения прозрачности пользователи должны зарегистрироваться через AI верификацию или email. Это предотвращает фальшивые отзывы и повышает надежность платформы."
       },
       {
         question: "Сколько отзывов я могу написать для одной компании?",
@@ -110,7 +110,7 @@ const FAQ = () => {
       },
       {
         question: "Как предотвращаются фальшивые отзывы?",
-        answer: "Платформа использует несколько механизмов безопасности: верификация SIMA, анализ ИИ, лимит отзывов в 12 месяцев и проверка модератором."
+        answer: "Платформа использует несколько механизмов безопасности: AI верификация, анализ ИИ, лимит отзывов в 12 месяцев и проверка модератором."
       }
     ]
   };

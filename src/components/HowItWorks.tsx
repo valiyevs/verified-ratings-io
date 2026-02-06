@@ -3,8 +3,8 @@ import { UserCheck, Search, Star, BarChart3 } from "lucide-react";
 const steps = [
   {
     icon: UserCheck,
-    title: "SİMA ilə Qeydiyyat",
-    description: "FİN kod və ya SİMA ilə bir dəfəlik doğrulama. Saxta hesabları istisna edirik.",
+    title: "AI ilə Qeydiyyat",
+    description: "FİN kod və ya AI ilə bir dəfəlik doğrulama. Saxta hesabları istisna edirik.",
   },
   {
     icon: Search,
