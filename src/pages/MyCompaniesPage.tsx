@@ -53,19 +53,35 @@ const MyCompaniesPage = () => {
   const fetchMyCompanies = async () => {
     setLoading(true);
     
-    const { data, error } = await supabase
+    // Fetch owned companies
+    const { data: ownedData } = await supabase
       .from('companies')
       .select('id, name, category, status, logo_url, average_rating, review_count, subscription_plan')
       .eq('owner_id', user?.id)
       .order('created_at', { ascending: false });
     
-    if (error) {
-      console.error('Error fetching companies:', error);
-      toast({ title: 'Xəta baş verdi', variant: 'destructive' });
-    } else {
-      setCompanies(data || []);
+    // Fetch member companies
+    const { data: memberships } = await supabase
+      .from('company_members')
+      .select('company_id, role')
+      .eq('user_id', user?.id);
+    
+    let memberCompanies: Company[] = [];
+    if (memberships && memberships.length > 0) {
+      const memberCompanyIds = memberships.map(m => m.company_id);
+      const ownedIds = (ownedData || []).map(c => c.id);
+      const uniqueIds = memberCompanyIds.filter(id => !ownedIds.includes(id));
+      
+      if (uniqueIds.length > 0) {
+        const { data: memberData } = await supabase
+          .from('companies')
+          .select('id, name, category, status, logo_url, average_rating, review_count, subscription_plan')
+          .in('id', uniqueIds);
+        memberCompanies = memberData || [];
+      }
     }
     
+    setCompanies([...(ownedData || []), ...memberCompanies]);
     setLoading(false);
   };
 

@@ -106,6 +106,7 @@ const BusinessDashboard = () => {
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [analyzingKeywords, setAnalyzingKeywords] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [memberRole, setMemberRole] = useState<string | null>(null);
   
   // Reply states
   const [replyDialogOpen, setReplyDialogOpen] = useState(false);
@@ -154,14 +155,27 @@ const BusinessDashboard = () => {
       return;
     }
 
-    // Check if user is owner
-    if (companyData.owner_id !== user?.id) {
-      toast({ title: 'Bu dashboard-a giriş hüququnuz yoxdur', variant: 'destructive' });
-      navigate('/');
-      return;
+    // Check if user is owner or member
+    const isCompanyOwner = companyData.owner_id === user?.id;
+    
+    if (!isCompanyOwner) {
+      // Check if user is a company member
+      const { data: membership } = await supabase
+        .from('company_members')
+        .select('role')
+        .eq('company_id', companyId)
+        .eq('user_id', user?.id)
+        .maybeSingle();
+      
+      if (!membership) {
+        toast({ title: 'Bu dashboard-a giriş hüququnuz yoxdur', variant: 'destructive' });
+        navigate('/');
+        return;
+      }
+      setMemberRole(membership.role);
     }
 
-    setIsOwner(true);
+    setIsOwner(isCompanyOwner);
     setCompany(companyData);
 
     // Fetch reviews with criteria and user info
@@ -341,7 +355,7 @@ const BusinessDashboard = () => {
     );
   }
 
-  if (!company || !isOwner) {
+  if (!company || (!isOwner && !memberRole)) {
     return null;
   }
 
@@ -370,10 +384,15 @@ const BusinessDashboard = () => {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={openEditDialog}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Redaktə et
-            </Button>
+            {memberRole && !isOwner && (
+              <Badge variant="secondary">{memberRole === 'manager' ? 'Rəhbər' : 'Əməkdaş'}</Badge>
+            )}
+            {isOwner && (
+              <Button variant="outline" onClick={openEditDialog}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Redaktə et
+              </Button>
+            )}
             <Link to="/pricing">
               <Badge 
                 variant={getPlanBadgeVariant(company.subscription_plan)} 
