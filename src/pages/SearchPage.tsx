@@ -171,12 +171,12 @@ const SearchPage = () => {
         <div className="container mx-auto px-4">
           {/* Search Header */}
           <div className="max-w-5xl mx-auto mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
                 {t("search.title")}
               </h1>
               {user && (
-                <Button variant="hero" onClick={() => navigate("/add-company")} className="gap-2">
+                <Button variant="hero" onClick={() => navigate("/add-company")} className="gap-2 w-full sm:w-auto">
                   <Plus className="w-4 h-4" />
                   Şirkət əlavə et
                 </Button>
@@ -376,9 +376,9 @@ const SearchPage = () => {
                     key={company.id}
                     className="bg-card rounded-2xl border border-border p-6 hover:shadow-card-hover hover:border-primary/30 transition-all group"
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                       <Link to={`/company/${company.id}`} className="flex-shrink-0">
-                        <div className="w-16 h-16 bg-white rounded-xl p-2 flex items-center justify-center border border-border group-hover:border-primary/30 transition-colors">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white rounded-xl p-2 flex items-center justify-center border border-border group-hover:border-primary/30 transition-colors">
                           {company.logo_url ? (
                             <img
                               src={company.logo_url}
@@ -404,7 +404,7 @@ const SearchPage = () => {
                         <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
                           {company.description || "Təsvir yoxdur"}
                         </p>
-                        <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-4 text-sm flex-wrap">
                           <Badge variant="outline">{company.category}</Badge>
                           <span className="text-muted-foreground">
                             {(company.review_count || 0).toLocaleString()} {t("featured.reviews")}
@@ -412,9 +412,9 @@ const SearchPage = () => {
                         </div>
                       </Link>
 
-                      <div className="flex items-center gap-4 shrink-0">
+                      <div className="flex items-center gap-3 sm:gap-4 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
                         <div className="text-right">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2">
                             <StarRating rating={company.average_rating || 0} size="sm" showValue={false} />
                             <span className="font-bold text-foreground">
                               {(company.average_rating || 0).toFixed(1)}
@@ -429,7 +429,7 @@ const SearchPage = () => {
                           className="gap-1"
                         >
                           <Scale className="w-4 h-4" />
-                          {compareList.includes(company.id) ? "Seçildi" : t("search.compare")}
+                          <span className="hidden sm:inline">{compareList.includes(company.id) ? "Seçildi" : t("search.compare")}</span>
                         </Button>
                       </div>
                     </div>

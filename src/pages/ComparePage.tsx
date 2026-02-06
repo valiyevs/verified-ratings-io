@@ -254,7 +254,7 @@ const ComparePage = () => {
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium">Ümumi Reytinq</span>
                   </div>
-                  <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${selectedCompanies.length}, 1fr)` }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {selectedCompanies.map((company) => {
                       const value = company.average_rating || 0;
                       const allValues = selectedCompanies.map(c => c.average_rating || 0);
@@ -279,7 +279,7 @@ const ComparePage = () => {
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium">Rəy Sayı</span>
                   </div>
-                  <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${selectedCompanies.length}, 1fr)` }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {selectedCompanies.map((company) => {
                       const value = company.review_count || 0;
                       const allValues = selectedCompanies.map(c => c.review_count || 0);
@@ -305,7 +305,7 @@ const ComparePage = () => {
                   <div className="flex items-center justify-between mb-4">
                     <span className="font-semibold text-lg">Xülasə</span>
                   </div>
-                  <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${selectedCompanies.length}, 1fr)` }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {selectedCompanies.map((company) => (
                       <div key={company.id} className="text-center p-4 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground mb-1">{company.name}</p>
