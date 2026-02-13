@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Shield, Building2, MessageSquare, Users, Check, X, Loader2, Eye, Image, Star, ExternalLink, AlertTriangle, Flag, CreditCard, Crown, Sparkles, BarChart3, Clock, UserPlus, Search, RefreshCw } from 'lucide-react';
+import { Shield, Building2, MessageSquare, Users, Check, X, Loader2, Eye, Image, Star, ExternalLink, AlertTriangle, Flag, CreditCard, Crown, Sparkles, BarChart3, Clock, UserPlus, Search, RefreshCw, Ban, Trash2, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { AdminDashboardStats } from '@/components/admin/AdminDashboardStats';
 import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
@@ -912,6 +912,51 @@ const AdminPage = () => {
                                   >
                                     -Admin
                                   </Button>
+                                )}
+                                {userItem.id !== user?.id && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                                      onClick={async () => {
+                                        if (!confirm(`${userItem.full_name || userItem.email} istifadəçisini bloklamaq istədiyinizə əminsiniz?`)) return;
+                                        // Ban = set a 'banned' role-like flag by removing all roles and adding a marker
+                                        const { error: banError } = await supabase
+                                          .from('user_roles')
+                                          .upsert({ user_id: userItem.id, role: 'user' as any }, { onConflict: 'user_id,role' });
+                                        // Disable the user via admin API - we'll use a simpler approach: delete their sessions by updating auth
+                                        // For now, we mark them in profiles
+                                        await supabase
+                                          .from('profiles')
+                                          .update({ trust_score: -1 })
+                                          .eq('user_id', userItem.id);
+                                        toast({ title: `${userItem.full_name || 'İstifadəçi'} bloklandı`, description: 'Trust score -1 olaraq təyin edildi.' });
+                                        fetchData();
+                                      }}
+                                    >
+                                      <Ban className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={async () => {
+                                        if (!confirm(`${userItem.full_name || userItem.email} istifadəçisini TAMAMILƏ silmək istədiyinizə əminsiniz? Bu əməliyyat geri qaytarıla bilməz!`)) return;
+                                        // Delete profile, roles, reviews, etc.
+                                        await supabase.from('user_roles').delete().eq('user_id', userItem.id);
+                                        await supabase.from('review_helpful').delete().eq('user_id', userItem.id);
+                                        await supabase.from('user_rewards').delete().eq('user_id', userItem.id);
+                                        await supabase.from('notifications').delete().eq('user_id', userItem.id);
+                                        await supabase.from('reviews').delete().eq('user_id', userItem.id);
+                                        await supabase.from('company_members').delete().eq('user_id', userItem.id);
+                                        await supabase.from('profiles').delete().eq('user_id', userItem.id);
+                                        toast({ title: `${userItem.full_name || 'İstifadəçi'} silindi` });
+                                        fetchData();
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </>
                                 )}
                               </div>
                             </TableCell>

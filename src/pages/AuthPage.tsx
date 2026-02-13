@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Shield, Eye, EyeOff, Mail, Lock, User, Phone, Bot, CheckCircle } from "lucide-react";
+import { ArrowLeft, Shield, Eye, EyeOff, Mail, Lock, User, Phone, Bot, CheckCircle, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,8 @@ const AuthPage = () => {
   
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   
   // Login form state
   const [loginIdentifier, setLoginIdentifier] = useState("");
@@ -265,7 +267,65 @@ const AuthPage = () => {
                     <Button type="submit" variant="hero" className="w-full" disabled={isLoading}>
                       {isLoading ? "Yüklənir..." : "Daxil ol"}
                     </Button>
+
+                    <button
+                      type="button"
+                      onClick={() => setForgotPasswordMode(true)}
+                      className="w-full text-sm text-primary hover:underline mt-2"
+                    >
+                      Şifrəni unutmusunuz?
+                    </button>
                   </form>
+
+                  {/* Forgot Password Modal */}
+                  {forgotPasswordMode && (
+                    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setForgotPasswordMode(false)}>
+                      <div className="bg-card rounded-xl p-6 w-full max-w-sm shadow-lg space-y-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <KeyRound className="w-5 h-5 text-primary" />
+                          <h3 className="font-semibold text-lg">Şifrəni Sıfırla</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Email adresinizi daxil edin. Şifrə sıfırlama linki göndəriləcək.
+                        </p>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            type="email"
+                            placeholder="email@example.com"
+                            value={resetEmail}
+                            onChange={(e) => setResetEmail(e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" className="flex-1" onClick={() => setForgotPasswordMode(false)}>
+                            Ləğv et
+                          </Button>
+                          <Button 
+                            className="flex-1" 
+                            disabled={isLoading || !resetEmail.trim()}
+                            onClick={async () => {
+                              setIsLoading(true);
+                              const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+                                redirectTo: `${window.location.origin}/auth`,
+                              });
+                              setIsLoading(false);
+                              if (error) {
+                                toast({ title: "Xəta", description: error.message, variant: "destructive" });
+                              } else {
+                                toast({ title: "Link göndərildi!", description: "Emailinizi yoxlayın və şifrə sıfırlama linkinə klikləyin." });
+                                setForgotPasswordMode(false);
+                                setResetEmail("");
+                              }
+                            }}
+                          >
+                            {isLoading ? "Göndərilir..." : "Göndər"}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </TabsContent>
                 
                 <TabsContent value="register">

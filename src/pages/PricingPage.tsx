@@ -82,17 +82,37 @@ const PricingPage = () => {
   const fetchUserCompanies = async () => {
     if (!user) return;
     
-    const { data } = await supabase
+    // Fetch owned companies
+    const { data: ownedData } = await supabase
       .from('companies')
       .select('id, name, subscription_plan')
       .eq('owner_id', user.id)
       .eq('status', 'approved');
     
-    if (data) {
-      setUserCompanies(data);
-      if (data.length === 1) {
-        setSelectedCompanyId(data[0].id);
+    // Also fetch companies where user is a member
+    const { data: memberships } = await supabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', user.id);
+    
+    let memberCompanies: UserCompany[] = [];
+    if (memberships && memberships.length > 0) {
+      const ownedIds = (ownedData || []).map(c => c.id);
+      const memberIds = memberships.map(m => m.company_id).filter(id => !ownedIds.includes(id));
+      if (memberIds.length > 0) {
+        const { data: memberData } = await supabase
+          .from('companies')
+          .select('id, name, subscription_plan')
+          .in('id', memberIds)
+          .eq('status', 'approved');
+        memberCompanies = memberData || [];
       }
+    }
+    
+    const allCompanies = [...(ownedData || []), ...memberCompanies];
+    setUserCompanies(allCompanies);
+    if (allCompanies.length === 1) {
+      setSelectedCompanyId(allCompanies[0].id);
     }
   };
 
