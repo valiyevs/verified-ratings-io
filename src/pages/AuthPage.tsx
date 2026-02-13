@@ -22,6 +22,7 @@ const AuthPage = () => {
   const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
+  const [isCheckingBlock, setIsCheckingBlock] = useState(false);
 
   // Login form state
   const [loginIdentifier, setLoginIdentifier] = useState("");
@@ -34,10 +35,10 @@ const AuthPage = () => {
   const [registerPassword, setRegisterPassword] = useState("");
 
   useEffect(() => {
-    if (user && !loading) {
+    if (user && !loading && !isCheckingBlock) {
       navigate("/");
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, isCheckingBlock, navigate]);
 
   const formatPhoneNumber = (value: string) => {
     const digits = value.replace(/\D/g, '');
@@ -72,6 +73,8 @@ const AuthPage = () => {
     }
 
     setIsLoading(true);
+    setIsCheckingBlock(true);
+    setBlockMessage(null);
     
     let email = loginIdentifier.trim();
     
@@ -80,6 +83,7 @@ const AuthPage = () => {
       const resolvedEmail = await resolveEmailFromPhone(email);
       if (!resolvedEmail) {
         setIsLoading(false);
+        setIsCheckingBlock(false);
         toast({ title: "Xəta", description: "Bu telefon nömrəsi ilə qeydiyyatdan keçmiş hesab tapılmadı", variant: "destructive" });
         return;
       }
@@ -90,6 +94,7 @@ const AuthPage = () => {
     
     if (error) {
       setIsLoading(false);
+      setIsCheckingBlock(false);
       let errorMessage = "Daxil olma zamanı xəta baş verdi";
       if (error.message.includes("Invalid login credentials")) {
         errorMessage = "Email/telefon və ya şifrə yanlışdır";
@@ -113,12 +118,14 @@ const AuthPage = () => {
         // Sign out immediately
         await supabase.auth.signOut();
         setIsLoading(false);
+        setIsCheckingBlock(false);
         setBlockMessage(profile.block_reason || "Hesabınız bloklanıb. Dəstək xidməti ilə əlaqə saxlayın.");
         return;
       }
     }
 
     setIsLoading(false);
+    setIsCheckingBlock(false);
     toast({ title: "Uğurlu!", description: "Hesabınıza daxil oldunuz" });
     navigate("/");
   };
