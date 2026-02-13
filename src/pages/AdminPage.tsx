@@ -71,6 +71,8 @@ interface UserWithRole {
   full_name: string | null;
   created_at: string;
   roles: string[];
+  is_blocked: boolean;
+  block_reason: string | null;
 }
 
 const AdminPage = () => {
@@ -199,6 +201,8 @@ const AdminPage = () => {
         email: profile.email,
         full_name: profile.full_name,
         created_at: profile.created_at,
+        is_blocked: profile.is_blocked,
+        block_reason: profile.block_reason,
         roles: (rolesData || [])
           .filter(r => r.user_id === profile.user_id)
           .map(r => r.role),
@@ -855,8 +859,9 @@ const AdminPage = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Ad</TableHead>
+                         <TableHead>Ad</TableHead>
                           <TableHead>Email</TableHead>
+                          <TableHead>Status</TableHead>
                           <TableHead>Rollar</TableHead>
                           <TableHead>Qeydiyyat</TableHead>
                           <TableHead>Əməliyyatlar</TableHead>
@@ -864,9 +869,26 @@ const AdminPage = () => {
                       </TableHeader>
                       <TableBody>
                         {users.map((userItem) => (
-                          <TableRow key={userItem.id}>
-                            <TableCell className="font-medium">{userItem.full_name || 'N/A'}</TableCell>
+                          <TableRow key={userItem.id} className={userItem.is_blocked ? 'bg-destructive/5' : ''}>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                {userItem.full_name || 'N/A'}
+                                {userItem.is_blocked && <Ban className="h-4 w-4 text-destructive" />}
+                              </div>
+                            </TableCell>
                             <TableCell>{userItem.email}</TableCell>
+                            <TableCell>
+                              {userItem.is_blocked ? (
+                                <div>
+                                  <Badge variant="destructive" className="mb-1">Bloklanıb</Badge>
+                                  {userItem.block_reason && (
+                                    <p className="text-xs text-destructive/70 max-w-[200px] truncate">{userItem.block_reason}</p>
+                                  )}
+                                </div>
+                              ) : (
+                                <Badge variant="outline" className="text-green-600 border-green-300">Aktiv</Badge>
+                              )}
+                            </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
                                 {userItem.roles.length === 0 ? (
@@ -921,24 +943,43 @@ const AdminPage = () => {
                                 )}
                                 {userItem.id !== user?.id && (
                                   <>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="text-orange-600 border-orange-300 hover:bg-orange-50"
-                                      onClick={() => {
-                                        setBlockTargetUser(userItem);
-                                        setBlockReason('');
-                                        setBlockDialogOpen(true);
-                                      }}
-                                    >
-                                      <Ban className="h-4 w-4" />
-                                    </Button>
+                                    {userItem.is_blocked ? (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="text-green-600 border-green-300 hover:bg-green-50"
+                                        onClick={async () => {
+                                          await supabase
+                                            .from('profiles')
+                                            .update({ is_blocked: false, block_reason: null })
+                                            .eq('user_id', userItem.id);
+                                          toast({ title: `${userItem.full_name || 'İstifadəçi'} blokdan çıxarıldı` });
+                                          fetchData();
+                                        }}
+                                      >
+                                        <Check className="h-4 w-4 mr-1" />
+                                        Blokdan çıxar
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                                        onClick={() => {
+                                          setBlockTargetUser(userItem);
+                                          setBlockReason('');
+                                          setBlockDialogOpen(true);
+                                        }}
+                                      >
+                                        <Ban className="h-4 w-4 mr-1" />
+                                        Blokla
+                                      </Button>
+                                    )}
                                     <Button
                                       size="sm"
                                       variant="destructive"
                                       onClick={async () => {
                                         if (!confirm(`${userItem.full_name || userItem.email} istifadəçisini TAMAMILƏ silmək istədiyinizə əminsiniz? Bu əməliyyat geri qaytarıla bilməz!`)) return;
-                                        // Delete profile, roles, reviews, etc.
                                         await supabase.from('user_roles').delete().eq('user_id', userItem.id);
                                         await supabase.from('review_helpful').delete().eq('user_id', userItem.id);
                                         await supabase.from('user_rewards').delete().eq('user_id', userItem.id);
