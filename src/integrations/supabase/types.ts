@@ -297,6 +297,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_fin_verified: boolean | null
+          phone: string | null
           platform_activity_months: number | null
           review_reply_notifications: boolean | null
           survey_participation_count: number | null
@@ -315,6 +316,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_fin_verified?: boolean | null
+          phone?: string | null
           platform_activity_months?: number | null
           review_reply_notifications?: boolean | null
           survey_participation_count?: number | null
@@ -333,6 +335,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_fin_verified?: boolean | null
+          phone?: string | null
           platform_activity_months?: number | null
           review_reply_notifications?: boolean | null
           survey_participation_count?: number | null
