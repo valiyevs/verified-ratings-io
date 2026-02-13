@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Shield, Eye, EyeOff, Mail, Lock, User, Phone, Bot, CheckCircle, KeyRound } from "lucide-react";
+import { ArrowLeft, Shield, Eye, EyeOff, Mail, Lock, User, Phone, Bot, CheckCircle, KeyRound, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,8 @@ const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
-  
+  const [blockMessage, setBlockMessage] = useState<string | null>(null);
+
   // Login form state
   const [loginIdentifier, setLoginIdentifier] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -86,9 +87,9 @@ const AuthPage = () => {
     }
     
     const { error } = await signIn(email, loginPassword);
-    setIsLoading(false);
     
     if (error) {
+      setIsLoading(false);
       let errorMessage = "Daxil olma zamanı xəta baş verdi";
       if (error.message.includes("Invalid login credentials")) {
         errorMessage = "Email/telefon və ya şifrə yanlışdır";
@@ -99,6 +100,25 @@ const AuthPage = () => {
       return;
     }
 
+    // Check if user is blocked after successful auth
+    const { data: { user: loggedInUser } } = await supabase.auth.getUser();
+    if (loggedInUser) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_blocked, block_reason')
+        .eq('user_id', loggedInUser.id)
+        .maybeSingle();
+      
+      if (profile?.is_blocked) {
+        // Sign out immediately
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        setBlockMessage(profile.block_reason || "Hesabınız bloklanıb. Dəstək xidməti ilə əlaqə saxlayın.");
+        return;
+      }
+    }
+
+    setIsLoading(false);
     toast({ title: "Uğurlu!", description: "Hesabınıza daxil oldunuz" });
     navigate("/");
   };
@@ -226,6 +246,15 @@ const AuthPage = () => {
                 </TabsList>
                 
                 <TabsContent value="login">
+                  {blockMessage && (
+                    <div className="mb-4 p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Ban className="w-4 h-4 text-destructive" />
+                        <span className="font-semibold text-destructive text-sm">Hesabınız bloklanıb</span>
+                      </div>
+                      <p className="text-sm text-destructive/80">{blockMessage}</p>
+                    </div>
+                  )}
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="login-identifier">Email və ya Telefon</Label>
