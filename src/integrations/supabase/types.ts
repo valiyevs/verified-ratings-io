@@ -290,12 +290,14 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          block_reason: string | null
           company_update_notifications: boolean | null
           created_at: string
           email: string | null
           email_notifications_enabled: boolean | null
           full_name: string | null
           id: string
+          is_blocked: boolean
           is_fin_verified: boolean | null
           phone: string | null
           platform_activity_months: number | null
@@ -309,12 +311,14 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          block_reason?: string | null
           company_update_notifications?: boolean | null
           created_at?: string
           email?: string | null
           email_notifications_enabled?: boolean | null
           full_name?: string | null
           id?: string
+          is_blocked?: boolean
           is_fin_verified?: boolean | null
           phone?: string | null
           platform_activity_months?: number | null
@@ -328,12 +332,14 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          block_reason?: string | null
           company_update_notifications?: boolean | null
           created_at?: string
           email?: string | null
           email_notifications_enabled?: boolean | null
           full_name?: string | null
           id?: string
+          is_blocked?: boolean
           is_fin_verified?: boolean | null
           phone?: string | null
           platform_activity_months?: number | null

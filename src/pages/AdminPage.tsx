@@ -95,6 +95,12 @@ const AdminPage = () => {
   const [searchingOwner, setSearchingOwner] = useState(false);
   const [changingOwner, setChangingOwner] = useState(false);
 
+  // Block user dialog
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [blockTargetUser, setBlockTargetUser] = useState<UserWithRole | null>(null);
+  const [blockReason, setBlockReason] = useState('');
+  const [blocking, setBlocking] = useState(false);
+
   // Review detail dialog
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
@@ -919,20 +925,10 @@ const AdminPage = () => {
                                       size="sm"
                                       variant="outline"
                                       className="text-orange-600 border-orange-300 hover:bg-orange-50"
-                                      onClick={async () => {
-                                        if (!confirm(`${userItem.full_name || userItem.email} istifadəçisini bloklamaq istədiyinizə əminsiniz?`)) return;
-                                        // Ban = set a 'banned' role-like flag by removing all roles and adding a marker
-                                        const { error: banError } = await supabase
-                                          .from('user_roles')
-                                          .upsert({ user_id: userItem.id, role: 'user' as any }, { onConflict: 'user_id,role' });
-                                        // Disable the user via admin API - we'll use a simpler approach: delete their sessions by updating auth
-                                        // For now, we mark them in profiles
-                                        await supabase
-                                          .from('profiles')
-                                          .update({ trust_score: -1 })
-                                          .eq('user_id', userItem.id);
-                                        toast({ title: `${userItem.full_name || 'İstifadəçi'} bloklandı`, description: 'Trust score -1 olaraq təyin edildi.' });
-                                        fetchData();
+                                      onClick={() => {
+                                        setBlockTargetUser(userItem);
+                                        setBlockReason('');
+                                        setBlockDialogOpen(true);
                                       }}
                                     >
                                       <Ban className="h-4 w-4" />
@@ -1309,6 +1305,57 @@ const AdminPage = () => {
               className="max-h-[70vh] rounded-lg"
             />
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Block User Dialog */}
+      <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ban className="h-5 w-5 text-destructive" />
+              İstifadəçini Blokla
+            </DialogTitle>
+            <DialogDescription>
+              {blockTargetUser?.full_name || blockTargetUser?.email} istifadəçisini bloklamaq istədiyinizə əminsiniz?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Blok Səbəbi *</Label>
+              <Textarea
+                placeholder="Blok səbəbini yazın (istifadəçiyə göstəriləcək)..."
+                value={blockReason}
+                onChange={(e) => setBlockReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>Ləğv et</Button>
+            <Button
+              variant="destructive"
+              disabled={blocking || !blockReason.trim()}
+              onClick={async () => {
+                if (!blockTargetUser) return;
+                setBlocking(true);
+                await supabase
+                  .from('profiles')
+                  .update({ 
+                    is_blocked: true, 
+                    block_reason: blockReason.trim() 
+                  })
+                  .eq('user_id', blockTargetUser.id);
+                toast({ title: `${blockTargetUser.full_name || 'İstifadəçi'} bloklandı` });
+                setBlockDialogOpen(false);
+                setBlocking(false);
+                fetchData();
+              }}
+            >
+              {blocking ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Ban className="h-4 w-4 mr-2" />}
+              Blokla
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
