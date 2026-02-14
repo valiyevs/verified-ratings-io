@@ -4,6 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { CompetitorAnalysis } from '@/components/CompetitorAnalysis';
+import { ResponseTemplates } from '@/components/business/ResponseTemplates';
+import { SentimentTrend } from '@/components/business/SentimentTrend';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -543,6 +545,13 @@ const BusinessDashboard = () => {
                   {!permissions.canViewDetailedAnalytics && <Lock className="h-3 w-3 mr-1" />}
                   Rəqib Analizi
                 </TabsTrigger>
+                <TabsTrigger value="sentiment" disabled={!permissions.canViewAnalytics}>
+                  {!permissions.canViewAnalytics && <Lock className="h-3 w-3 mr-1" />}
+                  Sentiment
+                </TabsTrigger>
+                <TabsTrigger value="templates">
+                  Şablonlar
+                </TabsTrigger>
               </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -983,6 +992,14 @@ const BusinessDashboard = () => {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="sentiment">
+            <SentimentTrend reviews={reviews} />
+          </TabsContent>
+
+          <TabsContent value="templates">
+            {companyId && <ResponseTemplates companyId={companyId} />}
           </TabsContent>
         </Tabs>
           );

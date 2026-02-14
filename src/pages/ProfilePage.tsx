@@ -11,11 +11,14 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { User, Star, Building2, Edit, Save, Loader2, Heart, X, Bell, Mail, Gift, Scale } from 'lucide-react';
+import { User, Star, Building2, Edit, Save, Loader2, Heart, X, Bell, Mail, Gift, Scale, Award, Trophy } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { RewardsCenter } from '@/components/customer/RewardsCenter';
 import { ReviewComparison } from '@/components/customer/ReviewComparison';
+import { BadgeDisplay } from '@/components/gamification/BadgeDisplay';
+import { Leaderboard } from '@/components/gamification/Leaderboard';
+import { ReviewContest } from '@/components/gamification/ReviewContest';
 
 interface Profile {
   id: string;
@@ -375,6 +378,14 @@ const ProfilePage = () => {
                 <Scale className="h-4 w-4 mr-2" />
                 Müqayisə
               </TabsTrigger>
+              <TabsTrigger value="badges">
+                <Award className="h-4 w-4 mr-2" />
+                Nişanlar
+              </TabsTrigger>
+              <TabsTrigger value="leaderboard">
+                <Trophy className="h-4 w-4 mr-2" />
+                Liderlik
+              </TabsTrigger>
               <TabsTrigger value="settings">
                 <Bell className="h-4 w-4 mr-2" />
                 Bildirişlər
@@ -546,6 +557,17 @@ const ProfilePage = () => {
             {/* Comparison Tab */}
             <TabsContent value="compare">
               <ReviewComparison />
+            </TabsContent>
+
+            {/* Badges Tab */}
+            <TabsContent value="badges">
+              <ReviewContest />
+              <BadgeDisplay />
+            </TabsContent>
+
+            {/* Leaderboard Tab */}
+            <TabsContent value="leaderboard">
+              <Leaderboard />
             </TabsContent>
 
             {/* Notification Settings Tab */}

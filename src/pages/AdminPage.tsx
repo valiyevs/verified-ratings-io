@@ -22,6 +22,8 @@ import { AdminDashboardStats } from '@/components/admin/AdminDashboardStats';
 import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
 import { getPlanName, getPlanBadgeVariant, type SubscriptionPlan } from '@/lib/subscriptionPermissions';
 import { CompanyMemberManager } from '@/components/admin/CompanyMemberManager';
+import { FraudDashboard } from '@/components/admin/FraudDashboard';
+import { ContestManager } from '@/components/admin/ContestManager';
 
 interface Company {
   id: string;
@@ -415,6 +417,14 @@ const AdminPage = () => {
             {isAdmin && <TabsTrigger value="audit" className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               Audit Log
+            </TabsTrigger>}
+            {isAdmin && <TabsTrigger value="fraud" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Saxtakarlıq
+            </TabsTrigger>}
+            {isAdmin && <TabsTrigger value="contests" className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              Yarışmalar
             </TabsTrigger>}
           </TabsList>
 
@@ -1007,9 +1017,21 @@ const AdminPage = () => {
             </TabsContent>
           )}
 
-          {isAdmin && (
+           {isAdmin && (
             <TabsContent value="members">
               <CompanyMemberManager />
+            </TabsContent>
+          )}
+
+          {isAdmin && (
+            <TabsContent value="fraud">
+              <FraudDashboard />
+            </TabsContent>
+          )}
+
+          {isAdmin && (
+            <TabsContent value="contests">
+              <ContestManager />
             </TabsContent>
           )}
         </Tabs>

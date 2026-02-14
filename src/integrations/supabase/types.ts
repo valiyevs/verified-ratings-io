@@ -254,6 +254,45 @@ export type Database = {
           },
         ]
       }
+      leaderboard: {
+        Row: {
+          badge_count: number | null
+          full_name: string | null
+          id: string
+          period: string | null
+          rank: number | null
+          total_helpful: number | null
+          total_points: number | null
+          total_reviews: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          badge_count?: number | null
+          full_name?: string | null
+          id?: string
+          period?: string | null
+          rank?: number | null
+          total_helpful?: number | null
+          total_points?: number | null
+          total_reviews?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          badge_count?: number | null
+          full_name?: string | null
+          id?: string
+          period?: string | null
+          rank?: number | null
+          total_helpful?: number | null
+          total_points?: number | null
+          total_reviews?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -299,6 +338,9 @@ export type Database = {
           id: string
           is_blocked: boolean
           is_fin_verified: boolean | null
+          last_login_date: string | null
+          login_streak: number | null
+          longest_streak: number | null
           phone: string | null
           platform_activity_months: number | null
           review_reply_notifications: boolean | null
@@ -320,6 +362,9 @@ export type Database = {
           id?: string
           is_blocked?: boolean
           is_fin_verified?: boolean | null
+          last_login_date?: string | null
+          login_streak?: number | null
+          longest_streak?: number | null
           phone?: string | null
           platform_activity_months?: number | null
           review_reply_notifications?: boolean | null
@@ -341,6 +386,9 @@ export type Database = {
           id?: string
           is_blocked?: boolean
           is_fin_verified?: boolean | null
+          last_login_date?: string | null
+          login_streak?: number | null
+          longest_streak?: number | null
           phone?: string | null
           platform_activity_months?: number | null
           review_reply_notifications?: boolean | null
@@ -352,6 +400,191 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      response_templates: {
+        Row: {
+          category: string | null
+          company_id: string
+          content: string
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          usage_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          company_id: string
+          content: string
+          created_at?: string
+          id?: string
+          title: string
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          company_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "response_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "response_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_contests: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string
+          id: string
+          prize_description: string | null
+          prize_points: number | null
+          start_date: string
+          status: string | null
+          title: string
+          winner_review_id: string | null
+          winner_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date: string
+          id?: string
+          prize_description?: string | null
+          prize_points?: number | null
+          start_date?: string
+          status?: string | null
+          title: string
+          winner_review_id?: string | null
+          winner_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          prize_description?: string | null
+          prize_points?: number | null
+          start_date?: string
+          status?: string | null
+          title?: string
+          winner_review_id?: string | null
+          winner_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_contests_winner_review_id_fkey"
+            columns: ["winner_review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_contests_winner_review_id_fkey"
+            columns: ["winner_review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_fraud_logs: {
+        Row: {
+          created_at: string
+          device_fingerprint: string | null
+          fraud_type: string | null
+          id: string
+          ip_address: string | null
+          is_copy_paste: boolean | null
+          review_id: string | null
+          risk_score: number | null
+          similar_review_id: string | null
+          similarity_score: number | null
+          typing_speed_wpm: number | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_fingerprint?: string | null
+          fraud_type?: string | null
+          id?: string
+          ip_address?: string | null
+          is_copy_paste?: boolean | null
+          review_id?: string | null
+          risk_score?: number | null
+          similar_review_id?: string | null
+          similarity_score?: number | null
+          typing_speed_wpm?: number | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_fingerprint?: string | null
+          fraud_type?: string | null
+          id?: string
+          ip_address?: string | null
+          is_copy_paste?: boolean | null
+          review_id?: string | null
+          risk_score?: number | null
+          similar_review_id?: string | null
+          similarity_score?: number | null
+          typing_speed_wpm?: number | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_fraud_logs_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_fraud_logs_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_fraud_logs_similar_review_id_fkey"
+            columns: ["similar_review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_fraud_logs_similar_review_id_fkey"
+            columns: ["similar_review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       review_helpful: {
         Row: {
@@ -452,11 +685,13 @@ export type Database = {
           service_rating: number | null
           speed_rating: number | null
           status: string
+          submission_ip: string | null
           title: string
           trust_score: number | null
           updated_at: string
           user_id: string
           weighted_rating: number | null
+          writing_duration_seconds: number | null
         }
         Insert: {
           company_id: string
@@ -475,11 +710,13 @@ export type Database = {
           service_rating?: number | null
           speed_rating?: number | null
           status?: string
+          submission_ip?: string | null
           title: string
           trust_score?: number | null
           updated_at?: string
           user_id: string
           weighted_rating?: number | null
+          writing_duration_seconds?: number | null
         }
         Update: {
           company_id?: string
@@ -498,11 +735,13 @@ export type Database = {
           service_rating?: number | null
           speed_rating?: number | null
           status?: string
+          submission_ip?: string | null
           title?: string
           trust_score?: number | null
           updated_at?: string
           user_id?: string
           weighted_rating?: number | null
+          writing_duration_seconds?: number | null
         }
         Relationships: [
           {
@@ -603,6 +842,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_badges: {
+        Row: {
+          badge_description: string | null
+          badge_icon: string
+          badge_name: string
+          badge_type: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_description?: string | null
+          badge_icon: string
+          badge_name: string
+          badge_type: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_description?: string | null
+          badge_icon?: string
+          badge_name?: string
+          badge_type?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_rewards: {
         Row: {
